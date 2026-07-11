@@ -1,1 +1,13 @@
-<resources><string name="app_name">FRCTL</string><string name="search">Поиск независимых приложений</string><string name="settings">Настройки токена</string><string name="install">УСТАНОВИТЬ APK</string></resources>
+<resources>
+    <string name="app_name">FRCTL</string><string name="subtitle">ОТКРЫТЫЕ ПРИЛОЖЕНИЯ. БЕЗ ГРАНИЦ.</string>
+    <string name="catalog_intro">Независимые Android-приложения прямо из публичных репозиториев GitHub. Сервер FRCTL не требуется.</string>
+    <string name="nav_apps">Приложения</string><string name="nav_trending">В тренде</string><string name="nav_search">Поиск</string><string name="nav_settings">Аккаунт</string>
+    <string name="featured">Рекомендуем</string><string name="recently_updated">Недавно обновлены</string><string name="trending">Популярное на GitHub</string>
+    <string name="search_title">Найти приложение</string><string name="search_hint">Название, назначение или ссылка GitHub</string><string name="search">Найти</string>
+    <string name="refresh">Обновить</string><string name="cached_catalog">Офлайн-каталог</string><string name="retry">Повторить</string><string name="back">Назад</string>
+    <string name="install">Скачать APK</string><string name="no_apk">В последнем релизе нет APK</string><string name="open_github">Открыть репозиторий</string><string name="full_description">О приложении</string>
+    <string name="account">Аккаунт и доступ</string><string name="github_account">Подключить GitHub</string><string name="github_benefit">Необязательно. Повышает лимит API с 60 до 5000 запросов в час. Публичный каталог работает без аккаунта.</string>
+    <string name="sign_in_github">Войти через GitHub</string><string name="enter_code">Введите этот код на GitHub</string><string name="connected">GitHub подключён</string>
+    <string name="oauth_setup_needed">Открыт браузер. Создайте токен только для чтения и вставьте ниже. Для Device Flow нужен OAuth Client ID проекта FRCTL.</string>
+    <string name="token_alternative">Или используйте личный токен</string><string name="github_token">Токен GitHub</string><string name="save">Сохранить доступ</string><string name="saved">Сохранено на устройстве</string><string name="local_only">Данные хранятся в закрытом хранилище приложения и не отправляются на сервер FRCTL.</string>
+</resources>

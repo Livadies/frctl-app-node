@@ -3,9 +3,10 @@
 local.properties
 **/build/
 *.apk
-*.png
+/frctl-*.png
 window-*.xml
 build/
+.analysis/
 *.jks
 *.keystore
 secrets.properties

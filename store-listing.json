@@ -1,0 +1,7 @@
+{
+  "name": "FRCTL",
+  "shortDescription": "Serverless Android app store for open-source GitHub releases with automatic discovery and resilient Hugging Face mirrors.",
+  "fullDescriptionFile": "FULL_DESCRIPTION.md",
+  "languages": ["en", "ru", "zh-CN"],
+  "version": "1.1.0"
+}

@@ -1,1 +1,13 @@
-<resources><string name="app_name">FRCTL</string><string name="search">Search sovereign apps</string><string name="settings">Token settings</string><string name="install">INSTALL APK</string></resources>
+<resources>
+    <string name="app_name">FRCTL</string><string name="subtitle">OPEN APPS. NO BORDERS.</string>
+    <string name="catalog_intro">Independent Android apps discovered directly from public GitHub repositories. No FRCTL server required.</string>
+    <string name="nav_apps">Apps</string><string name="nav_trending">Trending</string><string name="nav_search">Search</string><string name="nav_settings">Account</string>
+    <string name="featured">Recommended</string><string name="recently_updated">Recently updated</string><string name="trending">Trending on GitHub</string>
+    <string name="search_title">Find an app</string><string name="search_hint">Name, purpose or GitHub URL</string><string name="search">Search</string>
+    <string name="refresh">Refresh</string><string name="cached_catalog">Offline catalog</string><string name="retry">Try again</string><string name="back">Back</string>
+    <string name="install">Download APK</string><string name="no_apk">No APK in latest release</string><string name="open_github">Open repository</string><string name="full_description">About this app</string>
+    <string name="account">Account &amp; access</string><string name="github_account">Connect GitHub</string><string name="github_benefit">Optional. Raises the API limit from 60 to 5,000 requests per hour. The public catalog works without an account.</string>
+    <string name="sign_in_github">Sign in with GitHub</string><string name="enter_code">Enter this code on GitHub</string><string name="connected">GitHub connected</string>
+    <string name="oauth_setup_needed">Browser opened. Create a read-only token and paste it below. Native Device Flow requires the FRCTL OAuth client ID.</string>
+    <string name="token_alternative">Or use a personal token</string><string name="github_token">GitHub token</string><string name="save">Save access</string><string name="saved">Saved on this device</string><string name="local_only">Credentials stay in private app storage and are never sent to an FRCTL server.</string>
+</resources>

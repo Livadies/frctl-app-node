@@ -1,1 +1,13 @@
-<resources><string name="app_name">FRCTL</string><string name="search">搜索独立应用</string><string name="settings">令牌设置</string><string name="install">安装 APK</string></resources>
+<resources>
+    <string name="app_name">FRCTL</string><string name="subtitle">开放应用，无国界。</string>
+    <string name="catalog_intro">直接发现公开 GitHub 仓库中的独立 Android 应用，无需 FRCTL 服务器。</string>
+    <string name="nav_apps">应用</string><string name="nav_trending">热门</string><string name="nav_search">搜索</string><string name="nav_settings">账户</string>
+    <string name="featured">推荐</string><string name="recently_updated">最近更新</string><string name="trending">GitHub 热门</string>
+    <string name="search_title">查找应用</string><string name="search_hint">名称、用途或 GitHub 链接</string><string name="search">搜索</string>
+    <string name="refresh">刷新</string><string name="cached_catalog">离线目录</string><string name="retry">重试</string><string name="back">返回</string>
+    <string name="install">下载 APK</string><string name="no_apk">最新版本没有 APK</string><string name="open_github">打开仓库</string><string name="full_description">应用介绍</string>
+    <string name="account">账户与访问</string><string name="github_account">连接 GitHub</string><string name="github_benefit">可选。API 限额从每小时 60 次提升到 5000 次。公共目录无需账户。</string>
+    <string name="sign_in_github">使用 GitHub 登录</string><string name="enter_code">在 GitHub 输入此代码</string><string name="connected">GitHub 已连接</string>
+    <string name="oauth_setup_needed">浏览器已打开。创建只读令牌并粘贴到下方。Device Flow 需要 FRCTL OAuth Client ID。</string>
+    <string name="token_alternative">或使用个人令牌</string><string name="github_token">GitHub 令牌</string><string name="save">保存访问权限</string><string name="saved">已保存到设备</string><string name="local_only">凭据仅保存在应用私有存储中，不会发送到 FRCTL 服务器。</string>
+</resources>

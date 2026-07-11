@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "project": "FRCTL",
+  "version": "1.0.0",
+  "apk": "frctl.apk",
+  "github": "https://github.com/Livadies/frctl-app-node",
+  "routing": ["github", "huggingface"],
+  "license": "MIT"
+}

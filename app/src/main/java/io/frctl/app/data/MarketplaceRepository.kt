@@ -17,7 +17,7 @@ class MarketplaceRepository(private val context: Context) {
     private val store = TokenStore(context)
     private val client = HttpClient(Android) { install(HttpTimeout) { requestTimeoutMillis = 20_000 } }
     private val memory = mutableMapOf<String, Pair<Long, List<AppEntry>>>()
-    private val ttl = 30 * 60 * 1000L
+    private val ttl = 5 * 60 * 1000L
 
     suspend fun discover(force: Boolean = false): Pair<List<AppEntry>, Boolean> = cachedSearch(
         key = "discover",
@@ -33,12 +33,23 @@ class MarketplaceRepository(private val context: Context) {
         force = force
     )
 
+    suspend fun models(force: Boolean = false): Pair<List<AppEntry>, Boolean> = cachedModels(force)
+
     suspend fun search(query: String): List<AppEntry> {
         if (query.isBlank()) return discover().first
-        return fetchCandidates("$query in:name,description,readme android archived:false", "stars")
+        val apps = fetchCandidates("$query in:name,description,readme android archived:false", "stars")
+        val models = runCatching {
+            RawParsers.huggingFaceModels(request("https://huggingface.co/api/models?search=${URLEncoder.encode(query, "UTF-8")}&sort=trendingScore&direction=-1&limit=20", github = false))
+        }.getOrDefault(emptyList())
+        return (apps + models).distinctBy { "${it.kind}:${it.id}" }
     }
 
     suspend fun details(app: AppEntry): AppEntry {
+        if (app.kind == EntryKind.AI_MODEL) {
+            val readme = runCatching { request("https://huggingface.co/${app.id}/raw/main/README.md", github = false) }
+                .getOrDefault(app.description)
+            return app.copy(readme = readme)
+        }
         val release = runCatching { request("https://api.github.com/repos/${app.id}/releases/latest") }.getOrDefault("")
         val githubApk = RawParsers.apkLinks(release).firstOrNull()
         val mirror = if (githubApk == null) findMirror(app.name) else mirrorCandidate(app.name)
@@ -50,6 +61,26 @@ class MarketplaceRepository(private val context: Context) {
             readme = readme,
             source = if (githubApk != null) "GitHub" else if (mirror != null) "Hugging Face" else "GitHub"
         )
+    }
+
+    private suspend fun cachedModels(force: Boolean): Pair<List<AppEntry>, Boolean> {
+        val key = "models"
+        val now = System.currentTimeMillis()
+        memory[key]?.takeIf { !force && now - it.first < ttl }?.let { return it.second to true }
+        val file = File(context.cacheDir, "catalog-$key.json")
+        if (!force && file.exists() && now - file.lastModified() < ttl) {
+            val models = RawParsers.huggingFaceModels(file.readText())
+            if (models.isNotEmpty()) { memory[key] = now to models; return models to true }
+        }
+        return runCatching {
+            val raw = request("https://huggingface.co/api/models?sort=trendingScore&direction=-1&limit=30", github = false)
+            file.writeText(raw)
+            val models = RawParsers.huggingFaceModels(raw)
+            memory[key] = now to models
+            models to false
+        }.getOrElse {
+            if (file.exists()) RawParsers.huggingFaceModels(file.readText()) to true else throw it
+        }
     }
 
     private suspend fun cachedSearch(key: String, query: String, sort: String, force: Boolean): Pair<List<AppEntry>, Boolean> {
@@ -88,19 +119,20 @@ class MarketplaceRepository(private val context: Context) {
         return runCatching { client.get(candidate).status.value in 200..399 }.getOrDefault(false).let { if (it) candidate else null }
     }
 
-    private suspend fun request(url: String): String {
+    private suspend fun request(url: String, github: Boolean = true): String {
         val token = store.token.first()
         val mode = store.mode.first()
         val response: HttpResponse = client.get(url) {
             header(HttpHeaders.Accept, "application/vnd.github.raw+json, application/json, text/plain")
-            header("X-GitHub-Api-Version", "2022-11-28")
-            if (token.isNotBlank()) header(HttpHeaders.Authorization, when (mode) {
+            if (github) header("X-GitHub-Api-Version", "2022-11-28")
+            if (github && token.isNotBlank()) header(HttpHeaders.Authorization, when (mode) {
                 TokenMode.BEARER -> "Bearer $token"
                 TokenMode.TOKEN -> "token $token"
                 TokenMode.RAW -> token
             })
         }
-        if (response.status.value == 403) error("GitHub rate limit reached. Connect GitHub or use the cached catalog.")
+        if (response.status.value == 403 && github) error("GitHub rate limit reached. Connect GitHub or use the cached catalog.")
+        if (response.status.value == 429) error("Catalog source rate limit reached. Use the cached catalog and retry later.")
         if (response.status.value !in 200..299) error("Network route returned HTTP ${response.status.value}")
         return response.body()
     }

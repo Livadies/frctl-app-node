@@ -4,16 +4,32 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose")
 }
 
+val releaseKeystorePath = providers.environmentVariable("FRCTL_KEYSTORE_PATH").orElse(providers.gradleProperty("FRCTL_KEYSTORE_PATH")).orNull
+val releaseKeystorePassword = providers.environmentVariable("FRCTL_KEYSTORE_PASSWORD").orElse(providers.gradleProperty("FRCTL_KEYSTORE_PASSWORD")).orNull
+val releaseKeyAlias = providers.environmentVariable("FRCTL_KEY_ALIAS").orElse(providers.gradleProperty("FRCTL_KEY_ALIAS")).orElse("key0").get()
+val releaseKeyPassword = providers.environmentVariable("FRCTL_KEY_PASSWORD").orElse(providers.gradleProperty("FRCTL_KEY_PASSWORD")).orNull
+
 android {
     namespace = "io.frctl.app"
     compileSdk = 35
+
+    signingConfigs {
+        if (releaseKeystorePath != null && releaseKeystorePassword != null && releaseKeyPassword != null) {
+            create("release") {
+                storeFile = file(releaseKeystorePath)
+                storePassword = releaseKeystorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+            }
+        }
+    }
 
     defaultConfig {
         applicationId = "io.frctl.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.1.0"
+        versionCode = 4
+        versionName = "1.2.0"
         buildConfigField("String", "GITHUB_CLIENT_ID", "\"${providers.gradleProperty("FRCTL_GITHUB_CLIENT_ID").orElse("").get()}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true
@@ -22,6 +38,7 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.findByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
     }

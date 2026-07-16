@@ -1,3 +1,79 @@
-# FRCTL
+# FRCTL — открытая платформа приложений и удалённых рабочих сред
 
-Serverless Android app store: discovers open-source apps on GitHub, finds release APKs and falls back to Hugging Face mirrors. No backend or account required.
+FRCTL объединяет в одной оболочке живой каталог открытых Android‑приложений и ИИ‑моделей, локальные подключения SSH/PuTTY и RustDesk, изолированные рабочие среды и контролируемые workflow. Публичная часть бесплатна и ничего не исполняет на компьютере пользователя; опасные действия доступны только локальному FRCTL Node после подтверждения.
+
+## Что уже работает
+
+- Android‑приложение 1.2.0: GitHub + Hugging Face, поиск, категории, карточки моделей, обновление каждые 5 минут и офлайн‑кэш;
+- нативное приложение FRCTL для Windows 0.4.0: тот же marketplace и локальные SSH/PuTTY, RustDesk, Docker Sandbox и Browser Workspace;
+- FRCTL Node 0.4.0: allowlist, закрепление SSH host key, фиксированные workflow, системное подтверждение и SHA‑256‑цепочка аудита;
+- Hugging Face Space: бесплатная браузерная витрина из 48 живых карточек, фильтры, безопасный dry‑run и локальная микро‑модель следующего действия;
+- локальный Python Hub, Docker Compose и Kubernetes‑манифесты с ограниченными привилегиями;
+- автотесты: Android 4, Node 28, Hub 8.
+
+## Проверить без установки
+
+Откройте [публичный FRCTL Hub](https://livadies-frctl-hub.static.hf.space/). В верхней части должны появиться карточки GitHub и Hugging Face со статусом `LIVE CATALOG`. Выберите категорию «ИИ и модели» или введите запрос. Ниже можно выбрать RustDesk, указать `10.0.0.12:21118` и сформировать безопасный dry‑run.
+
+Строка `root:password@server.example` должна быть отклонена: credentials в адресе запрещены.
+
+## Windows
+
+Готовый архив после сборки находится в `hub/windows/dist/FRCTL-Windows-0.4.0.zip`. После распаковки запустите `install-windows.ps1` или сам EXE. Исходники и сборочная инструкция: [hub/windows/README.md](hub/windows/README.md).
+
+```powershell
+cd hub\windows
+.\build-windows.ps1
+```
+
+## Android
+
+Откройте проект в Android Studio или выполните:
+
+```powershell
+.\gradlew.bat testDebugUnitTest assembleDebug
+```
+
+Подписанная release‑сборка берёт параметры только из переменных `FRCTL_KEYSTORE_PATH`, `FRCTL_KEYSTORE_PASSWORD`, `FRCTL_KEY_ALIAS`, `FRCTL_KEY_PASSWORD`. Секреты в репозитории не хранятся.
+
+## FRCTL Node
+
+```powershell
+cd hub\node
+.\install.ps1
+.\run-node.cmd
+```
+
+Панель откроется только локально: http://127.0.0.1:7878/. Node не принимает пароли, токены или произвольные команды через API. Полная инструкция: [hub/node/README.md](hub/node/README.md).
+
+## Как связаны компоненты
+
+```text
+GitHub API ─┐
+            ├─ единый нормализованный каталог ─┬─ Android 1.2
+HF API ─────┘                                  ├─ Windows / Node 0.4
+                                               └─ публичный Space
+
+Публичный Space ── только просмотр и dry-run
+Локальный Node ─── подтверждение ── разрешённый клиент/сервер ── локальный аудит
+```
+
+GitHub и Hugging Face дают публичный каталог бесплатно в пределах их лимитов. GitHub Actions может бесплатно тестировать и собирать публичный проект, но не является постоянно работающим сервером. Реальные подключения и контейнеры используют ресурсы компьютера пользователя или его сервера.
+
+## Честные границы версии
+
+- это рабочая product alpha, а не сертифицированное средство защиты информации;
+- соответствие ФСТЭК требует отдельной модели угроз, документации, безопасного цикла разработки и испытаний в аккредитованной лаборатории;
+- P2P‑пул ресурсов, расчёты, блокчейн‑реестр и OAuth2‑инфраструктуры ещё не реализованы;
+- Windows EXE пока не подписан коммерческим Authenticode‑сертификатом;
+- сторонние приложения и модели требуют проверки лицензии, издателя, подписи и контрольной суммы.
+
+## Документация и восстановление
+
+- [Как полностью восстановить проект](RECOVERY_RU.md)
+- [Архитектура и границы доверия](hub/docs/ARCHITECTURE.md)
+- [Демонстрация инвестору](hub/docs/INVESTOR_DEMO_RU.md)
+- [Разрыв до сертификации ФСТЭК](hub/docs/FSTEC_GAP.md)
+- [Организационная модель НКО](hub/docs/NKO_MODEL.md)
+
+Лицензия проекта: [LICENSE](LICENSE).

@@ -35,7 +35,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import io.frctl.app.data.*
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 private val Neon = Color(0xFF57F287)
 private val Cyan = Color(0xFF49D6FF)
@@ -57,6 +61,12 @@ class MainActivity : ComponentActivity() {
 @Composable fun FrctlApp(vm: MainViewModel = viewModel()) {
     val state by vm.state.collectAsStateWithLifecycle()
     var screen by remember { mutableStateOf("home") }
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(5 * 60 * 1000L)
+            vm.loadHome(true)
+        }
+    }
     BackHandler(screen != "home") { screen = "home" }
     when (screen) {
         "detail" -> state.selected?.let { DetailScreen(it) { screen = "home" } }
@@ -84,13 +94,17 @@ class MainActivity : ComponentActivity() {
             when (current) {
                 "trending" -> CatalogList(stringResource(R.string.trending), state.trending, state.loading, state.error) { vm.select(it); navigate("detail") }
                 "search" -> SearchScreen(state, vm::query, vm::search, { vm.select(it); navigate("detail") })
-                else -> HomeScreen(state, { vm.loadHome(true) }, { vm.select(it); navigate("detail") })
+                else -> HomeScreen(state, { vm.loadHome(true) }, vm::category, { vm.select(it); navigate("detail") })
             }
         }
     }
 }
 
-@Composable private fun HomeScreen(state: SearchState, refresh: () -> Unit, open: (AppEntry) -> Unit) {
+@Composable private fun HomeScreen(state: SearchState, refresh: () -> Unit, chooseCategory: (MarketCategory) -> Unit, open: (AppEntry) -> Unit) {
+    val allEntries = remember(state.featured, state.trending, state.models) {
+        (state.featured + state.trending + state.models).distinctBy { "${it.kind}:${it.id}" }
+    }
+    val filtered = remember(allEntries, state.category) { allEntries.filter { MarketplaceClassifier.matches(it, state.category) }.sortedByDescending { it.updatedAt } }
     LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
         item {
             Box(Modifier.fillMaxWidth().background(Brush.verticalGradient(listOf(Color(0xFF17232A), Void))).padding(20.dp)) {
@@ -100,19 +114,48 @@ class MainActivity : ComponentActivity() {
                         IconButton(refresh) { Icon(Icons.Default.Refresh, stringResource(R.string.refresh)) }
                     }
                     Text(stringResource(R.string.catalog_intro), modifier = Modifier.padding(top = 14.dp), color = Color(0xFFB9C3CF))
-                    if (state.cached) AssistChip(onClick = {}, label = { Text(stringResource(R.string.cached_catalog)) }, leadingIcon = { Icon(Icons.Default.OfflineBolt, null) })
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.padding(top = 8.dp)) {
+                        AssistChip(onClick = {}, label = { Text(stringResource(R.string.live_updates)) }, leadingIcon = { Icon(Icons.Default.Bolt, null) })
+                        if (state.cached) AssistChip(onClick = {}, label = { Text(stringResource(R.string.cached_catalog)) }, leadingIcon = { Icon(Icons.Default.OfflineBolt, null) })
+                    }
+                    if (state.lastUpdatedAt > 0) Text(stringResource(R.string.updated_at, formattedTime(state.lastUpdatedAt)), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E9AA8))
+                }
+            }
+        }
+        item {
+            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items(MarketCategory.entries, key = { it.name }) { category ->
+                    FilterChip(selected = state.category == category, onClick = { chooseCategory(category) }, label = { Text(categoryLabel(category)) })
                 }
             }
         }
         if (state.loading && state.featured.isEmpty()) item { LinearProgressIndicator(Modifier.fillMaxWidth()) }
         state.error?.let { item { ErrorCard(it, refresh) } }
-        if (state.featured.isNotEmpty()) {
+        if (state.category != MarketCategory.ALL) {
+            item { SectionTitle("${categoryLabel(state.category)} · ${filtered.size}") }
+            if (filtered.isEmpty() && !state.loading) item { EmptyCategory() }
+            items(filtered, key = { "${it.kind}:${it.id}" }) { AppRow(it, open) }
+        } else if (state.featured.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.featured)) }
             item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(state.featured.take(8), key = { it.id }) { FeaturedCard(it, open) } } }
         }
-        if (state.trending.isNotEmpty()) {
+        if (state.category == MarketCategory.ALL && state.models.isNotEmpty()) {
+            item { SectionTitle(stringResource(R.string.ai_models)) }
+            item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(state.models.take(10), key = { it.id }) { ModelCard(it, open) } } }
+        }
+        if (state.category == MarketCategory.ALL && state.trending.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.recently_updated)) }
             items(state.trending.take(14), key = { it.id }) { AppRow(it, open) }
+        }
+    }
+}
+
+@Composable private fun ModelCard(app: AppEntry, open: (AppEntry) -> Unit) {
+    Card(Modifier.width(280.dp).height(185.dp).clickable { open(app) }, shape = RoundedCornerShape(24.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF131C27))) {
+        Column(Modifier.padding(18.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically) { AppIcon(app, 58); Spacer(Modifier.width(12.dp)); Column(Modifier.weight(1f)) { Text(app.name, fontWeight = FontWeight.Bold, maxLines = 1); Text(app.owner, color = Cyan, style = MaterialTheme.typography.labelMedium) } }
+            Text(app.pipelineTag.replace('-', ' '), maxLines = 2, color = Color(0xFFBBC4D0), modifier = Modifier.padding(top = 12.dp))
+            Text("↓ ${compact(app.downloads)}  ·  ♥ ${compact(app.stars)}", color = Neon, style = MaterialTheme.typography.labelLarge, modifier = Modifier.padding(top = 8.dp))
         }
     }
 }
@@ -133,12 +176,16 @@ class MainActivity : ComponentActivity() {
 
 @Composable private fun AppRow(app: AppEntry, open: (AppEntry) -> Unit) {
     Row(Modifier.fillMaxWidth().clickable { open(app) }.padding(horizontal = 18.dp, vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-        AppIcon(app, 64); Spacer(Modifier.width(14.dp)); Column(Modifier.weight(1f)) { Text(app.name, fontWeight = FontWeight.Bold, maxLines = 1); Text(app.description, maxLines = 2, overflow = TextOverflow.Ellipsis, color = Color(0xFFAEB8C5)); Text("${app.owner}  ·  ★ ${compact(app.stars)}", color = Cyan, style = MaterialTheme.typography.labelSmall) }; Icon(Icons.Default.ChevronRight, null)
+        AppIcon(app, 64); Spacer(Modifier.width(14.dp)); Column(Modifier.weight(1f)) { Text(app.name, fontWeight = FontWeight.Bold, maxLines = 1); Text(app.description, maxLines = 2, overflow = TextOverflow.Ellipsis, color = Color(0xFFAEB8C5)); Text((if (app.kind == EntryKind.AI_MODEL) "${app.source} · ↓ ${compact(app.downloads)}" else "${app.owner} · ★ ${compact(app.stars)}") + updatedSuffix(app.updatedAt), color = Cyan, style = MaterialTheme.typography.labelSmall) }; Icon(Icons.Default.ChevronRight, null)
     }
 }
 
 @Composable private fun AppIcon(app: AppEntry, size: Int) {
-    AsyncImage(model = app.iconUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF26303B)))
+    Box(Modifier.size(size.dp).clip(RoundedCornerShape(16.dp)).background(Color(0xFF26303B)), contentAlignment = Alignment.Center) {
+        if (app.kind == EntryKind.AI_MODEL) Icon(Icons.Default.Psychology, null, tint = Neon, modifier = Modifier.size((size / 2).dp))
+        else Text(app.name.take(1).uppercase(), color = Cyan, fontWeight = FontWeight.Black)
+        if (app.iconUrl != null) AsyncImage(model = app.iconUrl, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.fillMaxSize())
+    }
 }
 
 @Composable private fun SearchScreen(state: SearchState, query: (String) -> Unit, search: () -> Unit, open: (AppEntry) -> Unit) {
@@ -153,12 +200,13 @@ class MainActivity : ComponentActivity() {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable private fun DetailScreen(app: AppEntry, back: () -> Unit) {
     val context = LocalContext.current
+    val isModel = app.kind == EntryKind.AI_MODEL
     Scaffold(topBar = { TopAppBar(title = { Text(app.name) }, navigationIcon = { IconButton(back) { Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) } }) }) { pad ->
         LazyColumn(Modifier.padding(pad), contentPadding = PaddingValues(18.dp)) {
-            item { Row(verticalAlignment = Alignment.CenterVertically) { AppIcon(app, 88); Spacer(Modifier.width(16.dp)); Column { Text(app.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(app.owner, color = Cyan); Text("★ ${compact(app.stars)}") } } }
+            item { Row(verticalAlignment = Alignment.CenterVertically) { AppIcon(app, 88); Spacer(Modifier.width(16.dp)); Column { Text(app.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(app.owner, color = Cyan); Text(if (isModel) "↓ ${compact(app.downloads)} · ♥ ${compact(app.stars)}" else "★ ${compact(app.stars)}") } } }
             item { Text(app.description, modifier = Modifier.padding(vertical = 18.dp), maxLines = 5) }
-            item { Button(enabled = app.apkUrl != null, onClick = { app.apkUrl?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }, modifier = Modifier.fillMaxWidth().height(54.dp).testTag("install_button"), shape = RoundedCornerShape(16.dp)) { Icon(Icons.Default.Download, null); Spacer(Modifier.width(8.dp)); Text(if (app.apkUrl == null) stringResource(R.string.no_apk) else stringResource(R.string.install)) } }
-            item { OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(app.repoUrl))) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(stringResource(R.string.open_github)) } }
+            item { Button(enabled = isModel || app.apkUrl != null, onClick = { val url = if (isModel) app.repoUrl else app.apkUrl; url?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }, modifier = Modifier.fillMaxWidth().height(54.dp).testTag("install_button"), shape = RoundedCornerShape(16.dp)) { Icon(if (isModel) Icons.Default.Psychology else Icons.Default.Download, null); Spacer(Modifier.width(8.dp)); Text(if (isModel) stringResource(R.string.open_model) else if (app.apkUrl == null) stringResource(R.string.no_apk) else stringResource(R.string.install)) } }
+            if (!isModel) item { OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(app.repoUrl))) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(stringResource(R.string.open_github)) } }
             item { SectionTitle(stringResource(R.string.full_description)) }
             item { LightweightMarkdown(app.readme.ifBlank { app.description }) }
         }
@@ -192,5 +240,19 @@ class MainActivity : ComponentActivity() {
 @Composable private fun SectionTitle(text: String) = Text(text, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, modifier = Modifier.padding(horizontal = 18.dp, vertical = 18.dp))
 @Composable private fun ErrorCard(text: String, retry: () -> Unit) = Card(Modifier.fillMaxWidth().padding(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF321E27))) { Column(Modifier.padding(16.dp)) { Text(text); TextButton(retry) { Text(stringResource(R.string.retry)) } } }
 private fun compact(value: Int) = when { value >= 1_000_000 -> "%.1fM".format(value / 1_000_000f); value >= 1_000 -> "%.1fK".format(value / 1_000f); else -> value.toString() }
+private fun formattedTime(value: Long): String = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(value))
+private fun updatedSuffix(value: String): String = runCatching { " · " + DateTimeFormatter.ofPattern("dd.MM HH:mm").withZone(ZoneId.systemDefault()).format(Instant.parse(value)) }.getOrDefault("")
+
+@Composable private fun categoryLabel(category: MarketCategory): String = stringResource(when (category) {
+    MarketCategory.ALL -> R.string.category_all
+    MarketCategory.ANDROID -> R.string.category_android
+    MarketCategory.AI -> R.string.category_ai
+    MarketCategory.SECURITY -> R.string.category_security
+    MarketCategory.REMOTE_ACCESS -> R.string.category_remote
+    MarketCategory.TOOLS -> R.string.category_tools
+    MarketCategory.MEDIA -> R.string.category_media
+})
+
+@Composable private fun EmptyCategory() = Text(stringResource(R.string.empty_category), color = Color(0xFFAEB8C5), modifier = Modifier.padding(horizontal = 18.dp, vertical = 24.dp))
 
 @Composable private fun LightweightMarkdown(markdown: String) { Column(verticalArrangement = Arrangement.spacedBy(7.dp)) { markdown.lineSequence().take(220).forEach { raw -> val line = raw.trim(); when { line.startsWith("# ") -> Text(line.drop(2), style = MaterialTheme.typography.headlineMedium, color = Neon); line.startsWith("## ") -> Text(line.drop(3), style = MaterialTheme.typography.titleLarge, color = Neon); line.startsWith("### ") -> Text(line.drop(4), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold); line.startsWith("- ") || line.startsWith("* ") -> Text("• " + line.drop(2)); line.isNotBlank() -> Text(line.replace(Regex("[*_`]{1,3}"), "")) } } } }

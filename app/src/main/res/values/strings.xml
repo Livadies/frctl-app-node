@@ -4,7 +4,10 @@
     <string name="nav_apps">Apps</string><string name="nav_trending">Trending</string><string name="nav_search">Search</string><string name="nav_settings">Account</string>
     <string name="featured">Recommended</string><string name="recently_updated">Recently updated</string><string name="trending">Trending on GitHub</string>
     <string name="search_title">Find an app</string><string name="search_hint">Name, purpose or GitHub URL</string><string name="search">Search</string>
-    <string name="refresh">Refresh</string><string name="cached_catalog">Offline catalog</string><string name="retry">Try again</string><string name="back">Back</string>
+    <string name="refresh">Refresh</string><string name="cached_catalog">Cache · available offline</string><string name="retry">Try again</string><string name="back">Back</string>
+    <string name="live_updates">LIVE · every 5 minutes</string><string name="updated_at">Updated at %1$s</string><string name="ai_models">Hugging Face AI models</string>
+    <string name="category_all">All</string><string name="category_android">Android</string><string name="category_ai">AI &amp; models</string><string name="category_security">Security</string><string name="category_remote">Remote access</string><string name="category_tools">Tools</string><string name="category_media">Media</string><string name="empty_category">Nothing has been found in this category yet.</string>
+    <string name="open_model">Open model</string>
     <string name="install">Download APK</string><string name="no_apk">No APK in latest release</string><string name="open_github">Open repository</string><string name="full_description">About this app</string>
     <string name="account">Account &amp; access</string><string name="github_account">Connect GitHub</string><string name="github_benefit">Optional. Raises the API limit from 60 to 5,000 requests per hour. The public catalog works without an account.</string>
     <string name="sign_in_github">Sign in with GitHub</string><string name="enter_code">Enter this code on GitHub</string><string name="connected">GitHub connected</string>

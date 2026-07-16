@@ -4,7 +4,10 @@
     <string name="nav_apps">应用</string><string name="nav_trending">热门</string><string name="nav_search">搜索</string><string name="nav_settings">账户</string>
     <string name="featured">推荐</string><string name="recently_updated">最近更新</string><string name="trending">GitHub 热门</string>
     <string name="search_title">查找应用</string><string name="search_hint">名称、用途或 GitHub 链接</string><string name="search">搜索</string>
-    <string name="refresh">刷新</string><string name="cached_catalog">离线目录</string><string name="retry">重试</string><string name="back">返回</string>
+    <string name="refresh">刷新</string><string name="cached_catalog">缓存 · 可离线使用</string><string name="retry">重试</string><string name="back">返回</string>
+    <string name="live_updates">实时 · 每5分钟</string><string name="updated_at">更新时间 %1$s</string><string name="ai_models">Hugging Face AI 模型</string>
+    <string name="category_all">全部</string><string name="category_android">Android</string><string name="category_ai">AI 与模型</string><string name="category_security">安全</string><string name="category_remote">远程访问</string><string name="category_tools">工具</string><string name="category_media">媒体</string><string name="empty_category">此类别中尚未找到内容。</string>
+    <string name="open_model">打开模型</string>
     <string name="install">下载 APK</string><string name="no_apk">最新版本没有 APK</string><string name="open_github">打开仓库</string><string name="full_description">应用介绍</string>
     <string name="account">账户与访问</string><string name="github_account">连接 GitHub</string><string name="github_benefit">可选。API 限额从每小时 60 次提升到 5000 次。公共目录无需账户。</string>
     <string name="sign_in_github">使用 GitHub 登录</string><string name="enter_code">在 GitHub 输入此代码</string><string name="connected">GitHub 已连接</string>

@@ -1,5 +1,9 @@
 package io.frctl.app.data
 
+enum class EntryKind { ANDROID_APP, AI_MODEL }
+
+enum class MarketCategory { ALL, ANDROID, AI, SECURITY, REMOTE_ACCESS, TOOLS, MEDIA }
+
 data class AppEntry(
     val id: String,
     val name: String,
@@ -12,7 +16,11 @@ data class AppEntry(
     val source: String = "GitHub",
     val iconUrl: String? = null,
     val stars: Int = 0,
-    val updatedAt: String = ""
+    val updatedAt: String = "",
+    val kind: EntryKind = EntryKind.ANDROID_APP,
+    val category: MarketCategory = MarketCategory.TOOLS,
+    val downloads: Int = 0,
+    val pipelineTag: String = ""
 )
 
 enum class TokenMode { BEARER, TOKEN, RAW }
@@ -25,5 +33,28 @@ data class SearchState(
     val selected: AppEntry? = null,
     val featured: List<AppEntry> = emptyList(),
     val trending: List<AppEntry> = emptyList(),
-    val cached: Boolean = false
+    val models: List<AppEntry> = emptyList(),
+    val cached: Boolean = false,
+    val category: MarketCategory = MarketCategory.ALL,
+    val lastUpdatedAt: Long = 0L
 )
+
+object MarketplaceClassifier {
+    fun android(name: String, description: String): MarketCategory {
+        val text = "$name $description".lowercase()
+        return when {
+            listOf("ssh", "remote", "rdp", "vnc", "rustdesk", "server", "terminal").any(text::contains) -> MarketCategory.REMOTE_ACCESS
+            listOf("security", "privacy", "vpn", "firewall", "password", "auth", "encrypt").any(text::contains) -> MarketCategory.SECURITY
+            listOf("camera", "music", "audio", "video", "photo", "gallery", "player").any(text::contains) -> MarketCategory.MEDIA
+            listOf(" ai ", "llm", "model", "machine learning", "neural", "chatbot").any { text.contains(it) } -> MarketCategory.AI
+            else -> MarketCategory.TOOLS
+        }
+    }
+
+    fun matches(entry: AppEntry, filter: MarketCategory): Boolean = when (filter) {
+        MarketCategory.ALL -> true
+        MarketCategory.ANDROID -> entry.kind == EntryKind.ANDROID_APP
+        MarketCategory.AI -> entry.kind == EntryKind.AI_MODEL || entry.category == MarketCategory.AI
+        else -> entry.category == filter
+    }
+}

@@ -1,0 +1,45 @@
+{
+  "host": "127.0.0.1",
+  "port": 7878,
+  "allowed_targets": [
+    "localhost",
+    "127.0.0.0/8",
+    "10.0.0.0/8",
+    "172.16.0.0/12",
+    "192.168.0.0/16",
+    "*.local",
+    "server.example"
+  ],
+  "allowed_docker_images": [
+    "alpine:3.20",
+    "ubuntu:24.04"
+  ],
+  "allowed_identity_files": [],
+  "allowed_workflows": [
+    "diagnostics",
+    "proof-file"
+  ],
+  "ssh_host_keys": {},
+  "ssh_users": {},
+  "plink_paths": [
+    "%LOCALAPPDATA%\\FRCTL\\tools\\plink.exe",
+    "C:\\Program Files\\PuTTY\\plink.exe",
+    "C:\\Program Files (x86)\\PuTTY\\plink.exe",
+    "%USERPROFILE%\\Desktop\\plink.exe",
+    "%USERPROFILE%\\OneDrive\\Desktop\\plink.exe"
+  ],
+  "workflow_timeout_seconds": 45,
+  "workflow_output_limit": 65536,
+  "rustdesk_paths": [
+    "C:\\Program Files\\RustDesk\\rustdesk.exe",
+    "C:\\Program Files (x86)\\RustDesk\\rustdesk.exe"
+  ],
+  "putty_paths": [
+    "C:\\Program Files\\PuTTY\\putty.exe",
+    "C:\\Program Files (x86)\\PuTTY\\putty.exe",
+    "%USERPROFILE%\\Desktop\\putty.exe",
+    "%USERPROFILE%\\OneDrive\\Desktop\\putty.exe"
+  ],
+  "open_browser": true,
+  "audit_limit": 5000
+}

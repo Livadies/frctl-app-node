@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07110f">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src https://api.github.com https://huggingface.co; frame-ancestors 'none'; base-uri 'none'; form-action 'none'">
+  <title>FRCTL Hub</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="mark">F</span><div><b>FRCTL HUB</b><small>open workspace fabric</small></div></div>
+    <div class="top-actions"><span id="market-status" class="badge pending">CATALOG LOADING</span><span class="badge safe">EXECUTION OFF</span></div>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">LOCAL-FIRST CONTROL PLANE · 0.4</p>
+      <h1>Одно рабочее место.<br><span>Нулевое неявное доверие.</span></h1>
+      <p>Планировщик OSS‑подключений, песочниц и агентских workflow. Публичная демо‑версия ничего не выполняет на удалённых узлах.</p>
+      <div class="hero-stats"><div><b id="market-count">—</b><small>живых карточек</small></div><div><b id="connector-count">4</b><small>коннектора</small></div><div><b>0</b><small>секретов на сервере</small></div><div><b>100%</b><small>dry-run</small></div></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><p class="eyebrow">LIVE MARKETPLACE</p><h2>Приложения и ИИ-модели</h2></div><span id="market-updated" class="muted">Загрузка…</span></div>
+      <div class="market-tools">
+        <label class="search-label">Поиск<input id="market-search" type="search" placeholder="RustDesk, Android, speech…" maxlength="80" autocomplete="off"></label>
+        <div id="market-categories" class="categories" aria-label="Категории"></div>
+      </div>
+      <div id="marketplace" class="marketplace" aria-live="polite"></div>
+      <p id="market-message" class="fine"></p>
+    </section>
+
+    <section class="panel connector-panel">
+      <div class="section-head"><div><p class="eyebrow">MARKETPLACE</p><h2>Коннекторы</h2></div><span class="muted">OSS adapters</span></div>
+      <div id="connector-catalog" class="catalog" aria-live="polite"></div>
+    </section>
+
+    <section class="grid">
+      <form id="planner" class="panel">
+        <p class="eyebrow">WORKFLOW PLANNER</p><h2>Безопасный план</h2>
+        <label>Коннектор<select id="connector" name="connector"></select></label>
+        <label>Цель<input name="target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
+        <label>Действие<select name="action"><option value="inspect">Проверить</option><option value="connect">Подключить</option><option value="open-workspace">Открыть workspace</option><option value="collect-diagnostics">Диагностика</option></select></label>
+        <button type="submit">Сформировать dry-run</button>
+        <pre id="plan">План появится здесь. Команды не выполняются.</pre>
+      </form>
+
+      <section class="panel">
+        <p class="eyebrow">LOCAL MICRO-AGENT</p><h2>Адаптивная подсказка</h2>
+        <p class="muted">Последовательности действий обучаются только в этом браузере через локальную частотную модель.</p>
+        <div class="suggestion"><span>Следующее действие</span><b id="suggestion">Пока недостаточно локальной истории</b></div>
+        <button id="reset-learning" class="secondary">Сбросить локальное обучение</button>
+        <hr>
+        <label class="toggle"><input id="telemetry-consent" type="checkbox"><span></span>Хранить обезличенные события локально</label>
+        <p class="fine">Выключено по умолчанию. Данные никогда не покидают браузер.</p>
+      </section>
+    </section>
+  </main>
+  <footer>FRCTL Hub is a prototype, not a certified security product. <span id="health">static local-first mode</span></footer>
+  <script src="/app.js" defer></script>
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#06100e">
+  <title>FRCTL Node</title>
+  <link rel="stylesheet" href="/styles.css?v=0.4.0">
+  <link rel="stylesheet" href="/workflow.css?v=0.4.0">
+  <link rel="stylesheet" href="/marketplace.css?v=0.4.0">
+</head>
+<body>
+  <header>
+    <div class="brand"><span>F</span><div><b>FRCTL NODE</b><small>LOCAL EXECUTION BOUNDARY</small></div></div>
+    <div id="node-state" class="pill wait">ПРОВЕРКА УЗЛА</div>
+  </header>
+  <main>
+    <section class="hero">
+      <p class="eyebrow">LOOPBACK ONLY · CONSENT REQUIRED</p>
+      <h1>Подключение начинается<br><em>с вашего разрешения.</em></h1>
+      <p>Локальный узел запускает только проверенные клиенты. Пароли и произвольные команды через API не принимаются.</p>
+      <div class="stats"><div><b id="version">—</b><small>версия</small></div><div><b>127.0.0.1</b><small>единственный адрес</small></div><div><b id="audit-state">—</b><small>audit chain</small></div></div>
+    </section>
+
+    <section class="panel marketplace-panel">
+      <div class="title-row">
+        <div><p class="eyebrow">LIVE MARKETPLACE</p><h2>Приложения и ИИ‑модели</h2></div>
+        <div class="market-actions"><span id="market-state" class="pill wait">ЗАГРУЗКА</span><button id="market-refresh" class="ghost">Обновить</button></div>
+      </div>
+      <p class="muted">Единая витрина GitHub и Hugging Face. Данные обновляются каждые пять минут; выполнение по‑прежнему остаётся внутри локального Node.</p>
+      <div class="market-toolbar"><input id="market-search" type="search" placeholder="Найти приложение, модель или автора" maxlength="80"><div id="market-categories" class="market-categories"></div></div>
+      <div id="market-summary" class="market-summary">Подключаю безопасные публичные источники…</div>
+      <div id="market-grid" class="market-grid"></div>
+    </section>
+
+    <section class="panel">
+      <div class="title-row"><div><p class="eyebrow">CONNECTORS</p><h2>Локальные клиенты</h2></div><button id="refresh" class="ghost">Обновить статус</button></div>
+      <div id="catalog" class="catalog"></div>
+    </section>
+
+    <section class="layout">
+      <form id="launcher" class="panel">
+        <p class="eyebrow">SAFE LAUNCH</p><h2>Новое подключение</h2>
+        <label>Коннектор<select name="connector" id="connector"></select></label>
+        <label id="target-row">Цель<input name="target" id="target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
+        <div id="ssh-fields">
+          <label>SSH-клиент<select name="client" id="ssh-client"><option value="openssh">OpenSSH</option><option value="putty">PuTTY</option></select></label>
+          <label>Пользователь без пароля<input name="user" maxlength="32" placeholder="ubuntu" autocomplete="off"></label>
+          <label>Разрешённый PPK-ключ<select name="identity_file" id="identity-file"><option value="">Без ключа</option></select></label>
+        </div>
+        <label id="image-row" hidden>Профиль песочницы<select name="image" id="image"></select></label>
+        <div class="actions"><button type="submit">Проверить план</button><button id="launch" type="button" class="danger" disabled>Запустить</button></div>
+        <div id="message" class="message">Сначала сформируйте план. Запуск всегда требует отдельного системного подтверждения.</div>
+        <pre id="plan">План ещё не сформирован.</pre>
+      </form>
+
+      <aside class="panel">
+        <p class="eyebrow">TRUST POLICY</p><h2>Защитные гарантии</h2>
+        <ul class="checks">
+          <li>Node слушает только loopback</li>
+          <li>POST разрешён только same-origin панели</li>
+          <li>Credentials и arbitrary commands запрещены</li>
+          <li>Target обязан пройти allowlist</li>
+          <li>Каждый запуск подтверждается нативным окном</li>
+          <li>Аудит связан SHA-256 hash chain</li>
+        </ul>
+        <hr>
+        <p class="muted">Разрешённые цели</p><div id="allowlist" class="tags"></div>
+      </aside>
+    </section>
+
+    <section class="panel workflow-panel">
+      <div class="title-row">
+        <div><p class="eyebrow">ALLOWLISTED AUTOMATION</p><h2>SSH Workflow</h2></div>
+        <div id="plink-state" class="pill wait">ПРОВЕРКА PLINK</div>
+      </div>
+      <p class="muted">Только встроенные сценарии. Произвольные команды, пароль и неподтверждённый host key API не принимает.</p>
+      <form id="workflow-form" class="workflow-grid">
+        <label>Сервер<input name="target" id="workflow-target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
+        <label>SSH-пользователь<input name="user" id="workflow-user" maxlength="32" placeholder="ubuntu" autocomplete="off"></label>
+        <label>Разрешённый PPK<select name="identity_file" id="workflow-identity"><option value="">Выберите ключ</option></select></label>
+        <label>Готовый сценарий<select name="workflow" id="workflow-profile"></select></label>
+        <div class="actions workflow-actions"><button type="submit">Проверить workflow</button><button id="workflow-run" type="button" class="danger" disabled>Выполнить</button></div>
+      </form>
+      <div id="workflow-message" class="message">Сначала проверьте план и закреплённый fingerprint сервера.</div>
+      <div class="workflow-results">
+        <pre id="workflow-plan">Workflow ещё не сформирован.</pre>
+        <pre id="workflow-output">Вывод удалённой системы появится здесь.</pre>
+      </div>
+    </section>
+
+    <section class="panel audit-panel">
+      <div class="title-row"><div><p class="eyebrow">LOCAL AUDIT</p><h2>Последние операции</h2></div><button id="audit-refresh" class="ghost">Обновить</button></div>
+      <div id="audit" class="audit">Записей пока нет.</div>
+    </section>
+  </main>
+  <footer>FRCTL Node 0.4 Product Alpha · Windows‑маркетплейс и локальный execution boundary · не сертифицированное СЗИ</footer>
+  <script src="/app.js?v=0.4.0" defer></script>
+</body>
+</html>

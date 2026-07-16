@@ -5,6 +5,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.frctl.app.data.AppEntry
 import io.frctl.app.data.MarketplaceRepository
+import io.frctl.app.data.MarketCategory
 import io.frctl.app.data.SearchState
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -30,13 +31,17 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         runCatching {
             val featured = repository.discover(force)
             val trending = repository.trending(force)
-            Triple(featured.first, trending.first, featured.second || trending.second)
-        }.onSuccess { (featured, trending, cached) ->
-            mutable.update { it.copy(loading = false, featured = featured, trending = trending, cached = cached) }
+            val models = repository.models(force)
+            HomeResult(featured.first, trending.first, models.first, featured.second || trending.second || models.second)
+        }.onSuccess { result ->
+            mutable.update { it.copy(loading = false, featured = result.featured, trending = result.trending, models = result.models, cached = result.cached, lastUpdatedAt = System.currentTimeMillis()) }
         }.onFailure { e -> mutable.update { it.copy(loading = false, error = e.message ?: "Catalog unavailable") } }
     }
     fun select(app: AppEntry) = viewModelScope.launch {
         mutable.update { it.copy(selected = app) }
         runCatching { repository.details(app) }.onSuccess { full -> mutable.update { it.copy(selected = full) } }
     }
+    fun category(value: MarketCategory) = mutable.update { it.copy(category = value) }
+
+    private data class HomeResult(val featured: List<AppEntry>, val trending: List<AppEntry>, val models: List<AppEntry>, val cached: Boolean)
 }

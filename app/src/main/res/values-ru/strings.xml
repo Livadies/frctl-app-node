@@ -4,7 +4,10 @@
     <string name="nav_apps">Приложения</string><string name="nav_trending">В тренде</string><string name="nav_search">Поиск</string><string name="nav_settings">Аккаунт</string>
     <string name="featured">Рекомендуем</string><string name="recently_updated">Недавно обновлены</string><string name="trending">Популярное на GitHub</string>
     <string name="search_title">Найти приложение</string><string name="search_hint">Название, назначение или ссылка GitHub</string><string name="search">Найти</string>
-    <string name="refresh">Обновить</string><string name="cached_catalog">Офлайн-каталог</string><string name="retry">Повторить</string><string name="back">Назад</string>
+    <string name="refresh">Обновить</string><string name="cached_catalog">Кэш · доступен офлайн</string><string name="retry">Повторить</string><string name="back">Назад</string>
+    <string name="live_updates">LIVE · каждые 5 минут</string><string name="updated_at">Обновлено в %1$s</string><string name="ai_models">ИИ-модели Hugging Face</string>
+    <string name="category_all">Все</string><string name="category_android">Android</string><string name="category_ai">ИИ и модели</string><string name="category_security">Безопасность</string><string name="category_remote">Удалённый доступ</string><string name="category_tools">Инструменты</string><string name="category_media">Медиа</string><string name="empty_category">В этой категории пока ничего не найдено.</string>
+    <string name="open_model">Открыть модель</string>
     <string name="install">Скачать APK</string><string name="no_apk">В последнем релизе нет APK</string><string name="open_github">Открыть репозиторий</string><string name="full_description">О приложении</string>
     <string name="account">Аккаунт и доступ</string><string name="github_account">Подключить GitHub</string><string name="github_benefit">Необязательно. Повышает лимит API с 60 до 5000 запросов в час. Публичный каталог работает без аккаунта.</string>
     <string name="sign_in_github">Войти через GitHub</string><string name="enter_code">Введите этот код на GitHub</string><string name="connected">GitHub подключён</string>

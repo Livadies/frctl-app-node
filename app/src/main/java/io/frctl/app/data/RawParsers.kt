@@ -15,16 +15,44 @@ object RawParsers {
         val end = matches.getOrNull(index + 1)?.range?.first ?: raw.length
         val item = raw.substring(match.range.first, end)
         val (owner, name) = fullName.split('/').let { it.first() to it.last() }
+        val description = value(item, "description") ?: "Open-source Android application"
         AppEntry(
             id = fullName,
             name = name,
             owner = owner,
-            description = value(item, "description") ?: "Open-source Android application",
+            description = description,
             repoUrl = "https://github.com/$fullName",
             iconUrl = value(item, "avatar_url"),
             stars = number(item, "stargazers_count"),
-            updatedAt = value(item, "updated_at") ?: ""
+            updatedAt = value(item, "updated_at") ?: "",
+            category = MarketplaceClassifier.android(name, description)
         )
+        }.distinctBy { it.id }
+    }
+
+    fun huggingFaceModels(raw: String): List<AppEntry> {
+        val idRegex = Regex("\\\"(?:modelId|id)\\\"\\s*:\\s*\\\"([^\\\"]+/[^\\\"]+)\\\"")
+        val matches = idRegex.findAll(raw).toList()
+        return matches.mapIndexed { index, match ->
+            val id = match.groupValues[1]
+            val end = matches.getOrNull(index + 1)?.range?.first ?: raw.length
+            val item = raw.substring(match.range.first, end)
+            val (owner, name) = id.split('/').let { it.first() to it.last() }
+            val pipeline = value(item, "pipeline_tag") ?: "model"
+            AppEntry(
+                id = id,
+                name = name,
+                owner = owner,
+                description = "Hugging Face · ${pipeline.replace('-', ' ')}",
+                repoUrl = "https://huggingface.co/$id",
+                source = "Hugging Face",
+                stars = number(item, "likes"),
+                downloads = number(item, "downloads"),
+                updatedAt = value(item, "lastModified") ?: "",
+                kind = EntryKind.AI_MODEL,
+                category = MarketCategory.AI,
+                pipelineTag = pipeline
+            )
         }.distinctBy { it.id }
     }
 

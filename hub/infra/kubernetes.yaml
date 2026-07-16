@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frctl-hub
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: frctl-hub}
+  template:
+    metadata:
+      labels: {app: frctl-hub}
+    spec:
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: {type: RuntimeDefault}
+      containers:
+        - name: hub
+          image: ghcr.io/livadies/frctl-hub:latest
+          imagePullPolicy: Always
+          ports: [{containerPort: 7860}]
+          readinessProbe: {httpGet: {path: /api/health, port: 7860}, initialDelaySeconds: 3}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: {drop: ["ALL"]}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frctl-hub
+spec:
+  selector: {app: frctl-hub}
+  ports: [{port: 80, targetPort: 7860}]
+

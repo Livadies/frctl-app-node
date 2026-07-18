@@ -4,7 +4,7 @@ from pathlib import Path
 
 from frctl_node.config import NodeConfig
 from frctl_node.policy import PolicyError
-from frctl_node.workflows import BUILTIN_WORKFLOWS, WorkflowRegistry, _clean_output, _extract_workflow_output
+from frctl_node.workflows import BUILTIN_WORKFLOWS, WorkflowRegistry, _clean_output, _extract_workflow_output, plink_host_key
 
 
 FINGERPRINT = "ssh-rsa 2048 SHA256:aqhd4baMSoim0g9cp/N5ijj7OiirHKYKwJgeREDboAw"
@@ -42,6 +42,7 @@ class WorkflowTests(unittest.TestCase):
         plan = self.registry.plan(self.payload())
         self.assertEqual(plan.host_key, FINGERPRINT)
         self.assertIn("-hostkey", plan.command)
+        self.assertEqual("SHA256:aqhd4baMSoim0g9cp/N5ijj7OiirHKYKwJgeREDboAw", plan.command[plan.command.index("-hostkey") + 1])
         self.assertIn("whoami", plan.definition.commands)
         self.assertNotIn(str(self.key), plan.public().values())
         self.assertFalse(plan.public()["arbitrary_commands"])
@@ -82,6 +83,12 @@ class WorkflowTests(unittest.TestCase):
         extracted = _extract_workflow_output(output, BUILTIN_WORKFLOWS["diagnostics"])
         self.assertTrue(extracted.startswith("===== FRCTL_DIAGNOSTICS ====="))
         self.assertEqual(extracted.count("FRCTL_DIAGNOSTICS"), 1)
+
+    def test_plink_receives_only_sha256_fingerprint(self):
+        self.assertEqual(
+            "SHA256:aqhd4baMSoim0g9cp/N5ijj7OiirHKYKwJgeREDboAw",
+            plink_host_key(FINGERPRINT),
+        )
 
 
 if __name__ == "__main__":

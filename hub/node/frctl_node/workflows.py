@@ -15,6 +15,7 @@ from .policy import PolicyError, parse_target, target_allowed, validate_user
 
 ANSI_RE = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 HOST_KEY_RE = re.compile(r"^[A-Za-z0-9@._+-]+\s+\d{2,5}\s+SHA256:[A-Za-z0-9+/=]{20,100}$")
+SHA256_FINGERPRINT_RE = re.compile(r"SHA256:[A-Za-z0-9+/]{43}=?")
 WORKFLOW_FIELDS = {"target", "user", "identity_file", "workflow"}
 
 
@@ -117,7 +118,7 @@ class WorkflowPlan:
             "-P",
             str(self.port),
             "-hostkey",
-            self.host_key,
+            plink_host_key(self.host_key),
             "-i",
             self.identity_file,
             f"{self.user}@{self.host}",
@@ -196,6 +197,14 @@ class WorkflowRegistry:
             executable=executable,
             installed=bool(_find_plink(self.config)),
         )
+
+
+def plink_host_key(value: str) -> str:
+    """Return the exact fingerprint format accepted by PuTTY's -hostkey option."""
+    match = SHA256_FINGERPRINT_RE.search(value)
+    if not match:
+        raise PolicyError("SSH host-key не содержит SHA-256 fingerprint для Plink")
+    return match.group(0).rstrip("=")
 
 
 class WorkflowExecutionError(RuntimeError):

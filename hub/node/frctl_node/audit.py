@@ -42,15 +42,24 @@ class AuditLog:
     def _read_or_create_key(self) -> tuple[bytes, bool]:
         created = False
         try:
-            descriptor = os.open(self.key_path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_BINARY", 0)
+            descriptor = os.open(self.key_path, flags, 0o600)
         except FileExistsError:
             descriptor = None
         if descriptor is not None:
             created = True
             key = secrets.token_bytes(32)
             try:
-                os.write(descriptor, key)
+                written = 0
+                while written < len(key):
+                    count = os.write(descriptor, key[written:])
+                    if count <= 0:
+                        raise OSError("Не удалось полностью записать audit.key")
+                    written += count
                 os.fsync(descriptor)
+            except Exception:
+                self.key_path.unlink(missing_ok=True)
+                raise
             finally:
                 os.close(descriptor)
             self._restrict(self.key_path)

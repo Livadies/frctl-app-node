@@ -1,52 +1,53 @@
 package io.frctl.app.data
 
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
 object RawParsers {
-    private val apkRegex = Regex("https?://[^\\s\\\"'<>]+?\\.apk(?=[\\\"'<>\\s]|$)", RegexOption.IGNORE_CASE)
-    private val sha256AssetRegex = Regex("https?://[^\\s\\\"'<>]+?\\.sha256(?=[\\\"'<>\\s]|$)", RegexOption.IGNORE_CASE)
-    private val fullNameRegex = Regex("\\\"full_name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"")
+    private val json = Json { ignoreUnknownKeys = true }
+    private val sha256Regex = Regex("(?i)(?<![a-f0-9])[a-f0-9]{64}(?![a-f0-9])")
 
-    fun apkLinks(raw: String): List<String> = apkRegex.findAll(raw.replace("\\/", "/"))
-        .map { it.value.replace("\\u0026", "&") }
-        .distinct().toList()
+    fun apkLinks(raw: String): List<String> = releaseAssets(raw)
+        .filter { it.endsWith(".apk", ignoreCase = true) }
 
-    fun sha256Links(raw: String): List<String> = sha256AssetRegex.findAll(raw.replace("\\/", "/"))
-        .map { it.value.replace("\\u0026", "&") }
-        .distinct().toList()
+    fun sha256Links(raw: String): List<String> = releaseAssets(raw)
+        .filter { it.endsWith(".sha256", ignoreCase = true) }
 
-    fun sha256(raw: String): String? = Regex("(?i)(?<![a-f0-9])[a-f0-9]{64}(?![a-f0-9])")
-        .find(raw)?.value?.lowercase()
+    fun sha256(raw: String): String? = sha256Regex.find(raw)?.value?.lowercase()
 
-    fun githubCandidates(raw: String): List<AppEntry> {
-        val matches = fullNameRegex.findAll(raw).toList()
-        return matches.mapIndexed { index, match ->
-        val fullName = match.groupValues[1]
-        val end = matches.getOrNull(index + 1)?.range?.first ?: raw.length
-        val item = raw.substring(match.range.first, end)
-        val (owner, name) = fullName.split('/').let { it.first() to it.last() }
-        val description = value(item, "description") ?: "Open-source Android application"
-        AppEntry(
-            id = fullName,
-            name = name,
-            owner = owner,
-            description = description,
-            repoUrl = "https://github.com/$fullName",
-            iconUrl = value(item, "avatar_url"),
-            stars = number(item, "stargazers_count"),
-            updatedAt = value(item, "updated_at") ?: "",
-            category = MarketplaceClassifier.android(name, description)
-        )
+    fun githubCandidates(raw: String): List<AppEntry> = runCatching {
+        rootObject(raw).array("items").mapNotNull { element ->
+            val item = element.jsonObject
+            val fullName = item.string("full_name")?.takeIf { it.contains('/') } ?: return@mapNotNull null
+            val (owner, name) = fullName.split('/', limit = 2)
+            val description = item.string("description") ?: "Open-source Android application"
+            AppEntry(
+                id = fullName,
+                name = name,
+                owner = owner,
+                description = description,
+                repoUrl = "https://github.com/$fullName",
+                iconUrl = item.objectOrNull("owner")?.string("avatar_url"),
+                stars = item.int("stargazers_count") ?: 0,
+                updatedAt = item.string("updated_at").orEmpty(),
+                category = MarketplaceClassifier.android(name, description)
+            )
         }.distinctBy { it.id }
-    }
+    }.getOrDefault(emptyList())
 
-    fun huggingFaceModels(raw: String): List<AppEntry> {
-        val idRegex = Regex("\\\"(?:modelId|id)\\\"\\s*:\\s*\\\"([^\\\"]+/[^\\\"]+)\\\"")
-        val matches = idRegex.findAll(raw).toList()
-        return matches.mapIndexed { index, match ->
-            val id = match.groupValues[1]
-            val end = matches.getOrNull(index + 1)?.range?.first ?: raw.length
-            val item = raw.substring(match.range.first, end)
-            val (owner, name) = id.split('/').let { it.first() to it.last() }
-            val pipeline = value(item, "pipeline_tag") ?: "model"
+    fun huggingFaceModels(raw: String): List<AppEntry> = runCatching {
+        rootArray(raw).mapNotNull { element ->
+            val item = element.jsonObject
+            val id = listOfNotNull(item.string("id"), item.string("modelId"))
+                .firstOrNull { it.contains('/') } ?: return@mapNotNull null
+            val (owner, name) = id.split('/', limit = 2)
+            val pipeline = item.string("pipeline_tag") ?: "model"
             AppEntry(
                 id = id,
                 name = name,
@@ -54,21 +55,31 @@ object RawParsers {
                 description = "Hugging Face · ${pipeline.replace('-', ' ')}",
                 repoUrl = "https://huggingface.co/$id",
                 source = "Hugging Face",
-                stars = number(item, "likes"),
-                downloads = number(item, "downloads"),
-                updatedAt = value(item, "lastModified") ?: "",
+                stars = item.int("likes") ?: 0,
+                downloads = item.int("downloads") ?: 0,
+                updatedAt = item.string("lastModified").orEmpty(),
                 kind = EntryKind.AI_MODEL,
                 category = MarketCategory.AI,
                 pipelineTag = pipeline
             )
         }.distinctBy { it.id }
-    }
+    }.getOrDefault(emptyList())
 
-    fun jsonString(raw: String, key: String): String? = value(raw, key)
+    fun jsonString(raw: String, key: String): String? = runCatching { rootObject(raw).string(key) }.getOrNull()
 
-    private fun value(raw: String, key: String): String? = Regex("\\\"${Regex.escape(key)}\\\"\\s*:\\s*\\\"((?:\\\\.|[^\\\"])*)\\\"")
-        .find(raw)?.groupValues?.get(1)?.replace("\\n", "\n")?.replace("\\\"", "\"")?.replace("\\/", "/")
+    fun jsonInt(raw: String, key: String): Int? = runCatching { rootObject(raw).int(key) }.getOrNull()
 
-    private fun number(raw: String, key: String): Int = Regex("\\\"${Regex.escape(key)}\\\"\\s*:\\s*(\\d+)")
-        .find(raw)?.groupValues?.get(1)?.toIntOrNull() ?: 0
+    private fun releaseAssets(raw: String): List<String> = runCatching {
+        rootObject(raw).array("assets")
+            .mapNotNull { it.jsonObject.string("browser_download_url") }
+            .filter { it.startsWith("https://") }
+            .distinct()
+    }.getOrDefault(emptyList())
+
+    private fun rootObject(raw: String): JsonObject = json.parseToJsonElement(raw).jsonObject
+    private fun rootArray(raw: String): JsonArray = json.parseToJsonElement(raw).jsonArray
+    private fun JsonObject.string(key: String): String? = this[key]?.jsonPrimitive?.contentOrNull
+    private fun JsonObject.int(key: String): Int? = this[key]?.jsonPrimitive?.intOrNull
+    private fun JsonObject.array(key: String): JsonArray = this[key]?.let { runCatching { it.jsonArray }.getOrNull() } ?: JsonArray(emptyList())
+    private fun JsonObject.objectOrNull(key: String): JsonObject? = this[key]?.let { runCatching { it.jsonObject }.getOrNull() }
 }

@@ -26,8 +26,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.frctl.app.MainViewModel
 import io.frctl.app.R
 import io.frctl.app.data.SearchState
+import io.frctl.app.data.LocalModelEntity
 import io.frctl.app.data.libraryKey
 import io.frctl.app.ui.detail.DetailScreen
+import io.frctl.app.ui.chat.ChatScreen
 import io.frctl.app.ui.components.LocalSharedScopes
 import io.frctl.app.ui.components.SharedScopes
 import io.frctl.app.ui.home.CatalogList
@@ -53,10 +55,11 @@ fun FrctlRoot(vm: MainViewModel = viewModel()) {
 private fun FrctlApp(vm: MainViewModel, themeMode: ThemeMode, setThemeMode: (ThemeMode) -> Unit) {
     val state by vm.state.collectAsStateWithLifecycle()
     var screen by rememberSaveable { mutableStateOf("home") }
+    var chatModel by remember { mutableStateOf<LocalModelEntity?>(null) }
     LaunchedEffect(Unit) {
         while (true) { kotlinx.coroutines.delay(5 * 60 * 1000L); vm.loadHome(true) }
     }
-    PredictiveBackHandler(screen != "home") { progress -> progress.collect(); screen = "home" }
+    PredictiveBackHandler(screen != "home") { progress -> progress.collect(); screen = if (screen == "chat") "detail" else "home" }
     SharedTransitionLayout {
         val sharedScope = this
         AnimatedContent(
@@ -69,8 +72,9 @@ private fun FrctlApp(vm: MainViewModel, themeMode: ThemeMode, setThemeMode: (The
                 when (target) {
                     "detail" -> state.selected?.let { selected ->
                         val key = libraryKey(selected)
-                        DetailScreen(selected, key in state.favoriteIds, key in state.installedIds, { vm.toggleFavorite(selected) }, { vm.toggleInstalled(selected) }) { screen = "home" }
+                        DetailScreen(selected, key in state.favoriteIds, key in state.installedIds, { vm.toggleFavorite(selected) }, { vm.toggleInstalled(selected) }, { model -> chatModel = model; screen = "chat" }) { screen = "home" }
                     }
+                    "chat" -> chatModel?.let { model -> ChatScreen(model) { screen = "detail" } }
                     "settings" -> SettingsScreen(themeMode, setThemeMode) { screen = "home" }
                     else -> MainShell(target, { screen = it }, state, vm)
                 }

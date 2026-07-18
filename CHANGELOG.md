@@ -19,6 +19,15 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio1\jbr"
 
 ## История версий
 
+### v1.3.0 / FRCTL Node 0.5 — Feature phase 2 — 2026-07-18
+
+- Android catalog cache moved from temporary files to a persistent Room database with TTL and a dated offline banner;
+- favorites and a local installed list survive restarts; WorkManager checks tracked GitHub releases daily and can notify about updates;
+- search uses a 300 ms debounce, persists the last eight queries and shows useful empty-state suggestions;
+- GitHub repository topics are the primary category signal in the Node marketplace, with keywords retained as fallback;
+- the Node dashboard receives audit updates over same-origin SSE, verifies integrity on demand and exports verified JSONL;
+- Android version raised to 1.3.0 (5), Node version raised to 0.5.0.
+
 ### Correctness phase 1 — 2026-07-18
 
 - Android API responses are decoded with `kotlinx.serialization` and tolerate unknown, reordered and nullable fields;

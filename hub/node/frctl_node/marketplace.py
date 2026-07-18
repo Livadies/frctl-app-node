@@ -29,7 +29,17 @@ def _safe_url(value: Any, hosts: set[str]) -> str:
     return url[:500]
 
 
-def _category(name: str, description: str) -> str:
+def _category(name: str, description: str, topics: Any = None) -> str:
+    normalized_topics = {str(item).lower() for item in topics or [] if isinstance(item, str)}
+    topic_groups = (
+        ("remote-access", {"ssh", "rdp", "vnc", "remote-desktop", "remote-access", "terminal", "rustdesk"}),
+        ("security", {"security", "privacy", "vpn", "firewall", "password-manager", "authentication", "encryption"}),
+        ("media", {"media", "music", "audio", "video", "photo", "gallery", "player"}),
+        ("ai", {"ai", "llm", "machine-learning", "artificial-intelligence", "chatbot"}),
+    )
+    for category, known_topics in topic_groups:
+        if normalized_topics & known_topics:
+            return category
     text = f"{name} {description}".lower()
     if any(word in text for word in ("ssh", "remote", "rdp", "vnc", "rustdesk", "server", "terminal")):
         return "remote-access"
@@ -45,7 +55,7 @@ def _category(name: str, description: str) -> str:
 def _default_fetch(url: str) -> str:
     request = urllib.request.Request(
         url,
-        headers={"Accept": "application/vnd.github+json, application/json", "User-Agent": "FRCTL-Node/0.4"},
+        headers={"Accept": "application/vnd.github+json, application/json", "User-Agent": "FRCTL-Node/0.5"},
     )
     with urllib.request.urlopen(request, timeout=15) as response:
         payload = response.read(MAX_RESPONSE + 1)
@@ -128,7 +138,7 @@ class MarketplaceService:
                 continue
             result.append({
                 "id": f"github:{repo_id}", "kind": "android", "name": name, "owner": repo_id.split("/", 1)[0],
-                "description": description, "category": _category(name, description), "source": "GitHub", "url": url,
+                "description": description, "category": _category(name, description, item.get("topics")), "source": "GitHub", "url": url,
                 "score": int(item.get("stargazers_count") or 0), "downloads": 0, "updated_at": _text(item.get("updated_at"), 40),
             })
         return result

@@ -14,4 +14,7 @@
     <string name="sign_in_github">使用 GitHub 登录</string><string name="enter_code">在 GitHub 输入此代码</string><string name="connected">GitHub 已连接</string>
     <string name="oauth_setup_needed">浏览器已打开。创建只读令牌并粘贴到下方。Device Flow 需要 FRCTL OAuth Client ID。</string>
     <string name="token_alternative">或使用个人令牌</string><string name="github_token">GitHub 令牌</string><string name="save">保存访问权限</string><string name="saved">已保存到设备</string><string name="local_only">凭据仅保存在应用私有存储中，不会发送到 FRCTL 服务器。</string>
+    <string name="offline_catalog_date">离线目录更新于 %1$s</string><string name="favorites">收藏</string><string name="installed_library">已安装列表</string><string name="add_favorite">添加收藏</string><string name="in_favorites">已收藏</string><string name="mark_installed">标记为已安装</string><string name="marked_installed">已安装</string>
+    <string name="search_suggestions">搜索历史和建议</string><string name="search_empty">未找到内容。请尝试更短的名称或 privacy、SSH、AI 等类别。</string>
+    <string name="update_channel">应用更新</string><string name="updates_available">有可用更新</string>
 </resources>

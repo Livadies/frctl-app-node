@@ -1,0 +1,13 @@
+.title-row a.ghost {
+  display: inline-flex;
+  align-items: center;
+  text-decoration: none;
+  border-radius: 9px;
+}
+
+.market-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}

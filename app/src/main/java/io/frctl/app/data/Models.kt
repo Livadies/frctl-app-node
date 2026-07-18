@@ -40,8 +40,14 @@ data class SearchState(
     val trending: List<AppEntry> = emptyList(),
     val models: List<AppEntry> = emptyList(),
     val cached: Boolean = false,
+    val offline: Boolean = false,
+    val cachedAt: Long? = null,
     val category: MarketCategory = MarketCategory.ALL,
-    val lastUpdatedAt: Long = 0L
+    val lastUpdatedAt: Long = 0L,
+    val favoriteIds: Set<String> = emptySet(),
+    val installedIds: Set<String> = emptySet(),
+    val libraryEntries: List<AppEntry> = emptyList(),
+    val searchHistory: List<String> = emptyList(),
 )
 
 object MarketplaceClassifier {

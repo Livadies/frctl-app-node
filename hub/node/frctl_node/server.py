@@ -194,6 +194,10 @@ def handler_factory(service: NodeService):
                 self._json(service.status())
             elif path == "/api/audit":
                 self._json({"verified": service.audit.verify(), "records": service.audit.recent()})
+            elif path == "/api/audit/stream":
+                self._audit_stream()
+            elif path == "/api/audit/export":
+                self._audit_export()
             elif path == "/api/marketplace":
                 self._json(service.marketplace.snapshot())
             elif path.startswith("/api/"):
@@ -283,6 +287,40 @@ def handler_factory(service: NodeService):
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+
+        def _audit_export(self) -> None:
+            try:
+                body = service.audit.export_bytes()
+            except RuntimeError as exc:
+                self._json({"error": "audit_broken", "message": str(exc)}, HTTPStatus.CONFLICT)
+                return
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/x-ndjson; charset=utf-8")
+            self.send_header("Content-Disposition", 'attachment; filename="frctl-audit.jsonl"')
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def _audit_stream(self) -> None:
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/event-stream; charset=utf-8")
+            self.send_header("Cache-Control", "no-store")
+            self.send_header("Connection", "keep-alive")
+            self.end_headers()
+            records = service.audit.recent()
+            last_hash = str(records[-1].get("hash", "")) if records else ""
+            try:
+                while True:
+                    payload = json.dumps({"verified": service.audit.verify(), "records": records}, ensure_ascii=False)
+                    self.wfile.write(f"event: audit\ndata: {payload}\n\n".encode("utf-8"))
+                    self.wfile.flush()
+                    records = service.audit.wait_for_change(last_hash, timeout=15.0)
+                    if records:
+                        last_hash = str(records[-1].get("hash", ""))
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, TimeoutError):
+                self.close_connection = True
+                return
 
         def _static(self, name: str, set_session: bool = False) -> None:
             target = (STATIC_DIR / name).resolve()

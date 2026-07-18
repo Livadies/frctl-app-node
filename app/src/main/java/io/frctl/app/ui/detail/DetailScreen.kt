@@ -20,6 +20,8 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import io.frctl.app.R
 import io.frctl.app.data.*
 import io.frctl.app.ai.*
@@ -34,7 +36,7 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DetailScreen(app: AppEntry, favorite: Boolean, installed: Boolean, toggleFavorite: () -> Unit, toggleInstalled: () -> Unit, back: () -> Unit) {
+fun DetailScreen(app: AppEntry, favorite: Boolean, installed: Boolean, toggleFavorite: () -> Unit, toggleInstalled: () -> Unit, runLocal: (LocalModelEntity) -> Unit, ai: LocalAiViewModel = viewModel(), back: () -> Unit) {
     val context = LocalContext.current
     val haptics = LocalHapticFeedback.current
     val isModel = app.kind == EntryKind.AI_MODEL
@@ -43,11 +45,14 @@ fun DetailScreen(app: AppEntry, favorite: Boolean, installed: Boolean, toggleFav
     val localModelsFlow = remember { modelManager.localModels() }
     val localModels by localModelsFlow.collectAsState(initial = emptyList())
     val localModel = runnable?.let { target -> localModels.firstOrNull { it.id == target.key && it.status == LocalModelStatus.DOWNLOADED.name } }
+    val summaryModel = localModels.firstOrNull { it.status == LocalModelStatus.DOWNLOADED.name }
+    val aiState by ai.state.collectAsStateWithLifecycle()
     var eligibility by remember(runnable) { mutableStateOf<ModelEligibility?>(null) }
     var downloadState by remember(runnable) { mutableStateOf<ModelDownloadState?>(null) }
     var downloadJob by remember { mutableStateOf<Job?>(null) }
     val scope = rememberCoroutineScope()
     LaunchedEffect(runnable) { eligibility = runnable?.let { modelManager.eligibility(it) } }
+    DisposableEffect(app.id) { onDispose { ai.stopSummary() } }
     var showApkWarning by remember { mutableStateOf(false) }
     fun open(url: String?) { url?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }
     if (showApkWarning) {
@@ -81,7 +86,8 @@ fun DetailScreen(app: AppEntry, favorite: Boolean, installed: Boolean, toggleFav
                         !isModel -> showApkWarning = true
                         runnable == null -> open(app.repoUrl)
                         downloading -> downloadJob?.cancel()
-                        localModel == null -> downloadJob = scope.launch { modelManager.download(runnable).collect { downloadState = it } }
+                        localModel != null -> runLocal(localModel)
+                        else -> downloadJob = scope.launch { modelManager.download(runnable).collect { downloadState = it } }
                     }
                 }, modifier = Modifier.fillMaxWidth().height(54.dp).testTag("install_button"), shape = RoundedCornerShape(16.dp)) {
                     Icon(if (isModel) Icons.Default.Psychology else Icons.Default.Download, null); Spacer(Modifier.width(8.dp)); Text(when {
@@ -99,6 +105,16 @@ fun DetailScreen(app: AppEntry, favorite: Boolean, installed: Boolean, toggleFav
                 (downloadState as? ModelDownloadState.Error)?.let { Text(stringResource(R.string.model_download_failed, it.message), color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp)) }
             }
             if (!isModel) item { OutlinedButton(onClick = { open(app.repoUrl) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(stringResource(R.string.open_github)) } }
+            item {
+                OutlinedButton(onClick = {
+                    if (aiState.summarizing) ai.stopSummary()
+                    else summaryModel?.let { model -> ai.summarize(model, context.getString(R.string.summary_prompt, boundedReadme(app.readme.ifBlank { app.description }))) }
+                }, enabled = summaryModel != null, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Icon(if (aiState.summarizing) Icons.Default.Stop else Icons.Default.AutoAwesome, null); Spacer(Modifier.width(8.dp)); Text(stringResource(if (aiState.summarizing) R.string.stop_generation else R.string.summarize_app)) }
+                if (summaryModel == null) Text(stringResource(R.string.summary_needs_model), color = Color(0xFFFFC46B), style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 6.dp))
+                if (aiState.summarizing) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 8.dp))
+                if (aiState.summary.isNotBlank()) Card(Modifier.fillMaxWidth().padding(top = 8.dp)) { Column(Modifier.padding(14.dp)) { Text(stringResource(R.string.summary_disclaimer), style = MaterialTheme.typography.labelSmall, color = Color(0xFFFFC46B)); LightweightMarkdown(aiState.summary) } }
+                aiState.error?.let { Text(it, color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(top = 6.dp)) }
+            }
             item { SectionTitle(stringResource(R.string.full_description)) }
             item { LightweightMarkdown(app.readme.ifBlank { app.description }) }
         }

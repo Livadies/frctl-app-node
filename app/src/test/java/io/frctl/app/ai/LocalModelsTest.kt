@@ -32,4 +32,10 @@ class LocalModelsTest {
             file.delete()
         }
     }
+
+    @Test
+    fun boundsReadmeBeforeSendingItToTheLocalModel() {
+        assertEquals(6_000, boundedReadme("x".repeat(7_500)).length)
+        assertEquals("short", boundedReadme("short"))
+    }
 }

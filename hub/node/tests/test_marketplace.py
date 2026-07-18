@@ -1,6 +1,7 @@
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from frctl_node.marketplace import GITHUB_URL, MarketplaceService
@@ -42,6 +43,24 @@ class MarketplaceTests(unittest.TestCase):
         self.assertEqual([], result["entries"])
         self.assertTrue(result["degraded"])
         self.assertTrue(result["offline"])
+
+    def test_empty_degraded_memory_cache_expires_after_thirty_seconds(self):
+        cache = Path(self.temp.name) / "missing" / "catalog.json"
+        attempts = 0
+
+        def fetch(url):
+            nonlocal attempts
+            attempts += 1
+            if attempts == 1:
+                raise OSError("offline")
+            return json.dumps({"items": []}) if url == GITHUB_URL else json.dumps([])
+
+        service = MarketplaceService(cache, fetcher=fetch, ttl_seconds=300)
+        with patch("frctl_node.marketplace.time.time", side_effect=[100.0, 129.0, 131.0]):
+            self.assertTrue(service.snapshot()["degraded"])
+            self.assertTrue(service.snapshot()["cached"])
+            self.assertFalse(service.snapshot()["degraded"])
+        self.assertEqual(3, attempts)
 
     def test_github_topics_are_primary_category_source(self):
         payload = {"items": [{

@@ -18,4 +18,5 @@
     <string name="search_suggestions">История поиска и подсказки</string><string name="search_empty">Ничего не найдено. Попробуйте короткое название или категорию: privacy, SSH, ИИ.</string>
     <string name="update_channel">Обновления приложений</string><string name="updates_available">Доступны обновления</string>
     <string name="appearance_language">Внешний вид и язык</string><string name="theme_title">Тема</string><string name="theme_dynamic">Material You</string><string name="theme_frctl">FRCTL неон</string><string name="language_title">Язык</string><string name="language_system">Как в системе</string><string name="language_russian">Русский</string><string name="language_english">English</string><string name="language_chinese">中文</string><string name="language_german">Deutsch</string><string name="language_spanish">Español</string>
+    <string name="github_reauth_required">Сохранённые данные GitHub больше не расшифровываются. Выполните повторный вход или сохраните новый токен.</string>
 </resources>

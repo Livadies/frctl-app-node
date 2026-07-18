@@ -6,12 +6,18 @@ import io.ktor.client.call.body
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
+import io.ktor.client.request.head
 import io.ktor.client.request.header
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import java.net.URLEncoder
 
 internal fun mirrorCandidate(repoId: String): String {
@@ -37,6 +43,20 @@ data class LibraryState(val favoriteIds: Set<String>, val installedIds: Set<Stri
 
 internal fun isCacheFresh(savedAt: Long, now: Long, ttl: Long): Boolean = savedAt <= now && now - savedAt < ttl
 
+internal fun parseTrustedPublishers(raw: String): Set<String> =
+    Json.parseToJsonElement(raw)
+        .jsonObject["publishers"]
+        ?.jsonArray
+        .orEmpty()
+        .mapNotNull { it.jsonPrimitive.contentOrNull }
+        .mapTo(mutableSetOf()) { it.lowercase() }
+
+internal fun matchingChecksumUrl(apkUrl: String?, checksumUrls: List<String>): String? {
+    if (apkUrl == null) return null
+    val expectedName = "${apkUrl.substringAfterLast('/')}.sha256"
+    return checksumUrls.firstOrNull { it.substringAfterLast('/') == expectedName }
+}
+
 class MarketplaceRepository(private val context: Context) {
     private val store = TokenStore(context)
     private val dao = FrctlDatabase.get(context).dao()
@@ -46,8 +66,7 @@ class MarketplaceRepository(private val context: Context) {
     private val trustedPublishers by lazy {
         runCatching {
             val raw = context.assets.open("trusted_publishers.json").bufferedReader().use { it.readText() }
-            val list = Regex("\\\"publishers\\\"\\s*:\\s*\\[(.*?)]", setOf(RegexOption.DOT_MATCHES_ALL)).find(raw)?.groupValues?.get(1).orEmpty()
-            Regex("\\\"([A-Za-z0-9_.-]+)\\\"").findAll(list).map { it.groupValues[1].lowercase() }.toSet()
+            parseTrustedPublishers(raw)
         }.getOrDefault(emptySet())
     }
 
@@ -122,9 +141,7 @@ class MarketplaceRepository(private val context: Context) {
         }
         val release = runCatching { request("https://api.github.com/repos/${app.id}/releases/latest") }.getOrDefault("")
         val githubApk = RawParsers.apkLinks(release).firstOrNull()
-        val checksumUrl = RawParsers.sha256Links(release).firstOrNull { checksum ->
-            githubApk != null && checksum.substringAfterLast('/').removeSuffix(".sha256") == githubApk.substringAfterLast('/')
-        } ?: RawParsers.sha256Links(release).firstOrNull()
+        val checksumUrl = matchingChecksumUrl(githubApk, RawParsers.sha256Links(release))
         val expectedSha256 = checksumUrl?.let { url ->
             runCatching { RawParsers.sha256(request(url, github = false)) }.getOrNull()
         }
@@ -242,7 +259,7 @@ class MarketplaceRepository(private val context: Context) {
 
     private suspend fun findMirror(repoId: String): String? {
         val candidate = mirrorCandidate(repoId)
-        return runCatching { client.get(candidate).status.value in 200..399 }.getOrDefault(false).let { if (it) candidate else null }
+        return runCatching { client.head(candidate).status.value in 200..399 }.getOrDefault(false).let { if (it) candidate else null }
     }
 
     private suspend fun request(url: String, github: Boolean = true): String {

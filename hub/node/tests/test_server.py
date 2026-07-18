@@ -144,6 +144,18 @@ class ServerTests(unittest.TestCase):
             self.assertEqual("text/event-stream; charset=utf-8", response.headers["Content-Type"])
             self.assertEqual(b"event: audit\n", response.readline())
 
+    def test_audit_stream_limit_returns_429(self):
+        acquired = 0
+        while self.service.try_open_audit_stream():
+            acquired += 1
+        try:
+            with self.assertRaises(HTTPError) as caught:
+                self.request("/api/audit/stream")
+            self.assertEqual(429, caught.exception.code)
+        finally:
+            for _ in range(acquired):
+                self.service.close_audit_stream()
+
     def test_plan_and_launch(self):
         payload = {"connector": "ssh", "target": "server.example", "client": "openssh", "user": "ubuntu"}
         status, plan, _ = self.request("/api/plan", payload)

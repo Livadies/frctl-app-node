@@ -5,11 +5,13 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import java.security.KeyStore
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
@@ -58,6 +60,7 @@ private class AndroidKeystoreTokenCipher {
 class TokenStore(private val context: Context) {
     private val tokenKey = stringPreferencesKey("github_token")
     private val modeKey = stringPreferencesKey("token_mode")
+    private val reauthKey = booleanPreferencesKey("github_token_requires_reauth")
     private val cipher = AndroidKeystoreTokenCipher()
 
     val token: Flow<String> = context.dataStore.data.map { preferences ->
@@ -65,24 +68,41 @@ class TokenStore(private val context: Context) {
         when {
             stored.isBlank() -> ""
             cipher.isEncrypted(stored) -> runCatching { cipher.decrypt(stored) }.getOrDefault("")
-            else -> {
-                // One-time migration from the legacy plaintext DataStore value.
-                val encrypted = cipher.encrypt(stored)
-                context.dataStore.edit { current ->
-                    if (current[tokenKey] == stored) current[tokenKey] = encrypted
-                }
-                stored
-            }
+            else -> stored
         }
     }.distinctUntilChanged()
 
+    val requiresReauth: Flow<Boolean> = context.dataStore.data.map { it[reauthKey] ?: false }.distinctUntilChanged()
+
     val mode: Flow<TokenMode> = context.dataStore.data.map {
         runCatching { TokenMode.valueOf(it[modeKey] ?: "BEARER") }.getOrDefault(TokenMode.BEARER)
+    }
+
+    suspend fun migrateLegacyTokenOnce() {
+        val stored = context.dataStore.data.first()[tokenKey].orEmpty()
+        val migration = runCatching {
+            when {
+                stored.isBlank() -> null
+                cipher.isEncrypted(stored) -> cipher.decrypt(stored).let { stored }
+                else -> cipher.encrypt(stored)
+            }
+        }
+        context.dataStore.edit { current ->
+            if (migration.isSuccess) {
+                migration.getOrNull()?.let { migrated ->
+                    if (current[tokenKey] == stored) current[tokenKey] = migrated
+                }
+                current[reauthKey] = false
+            } else {
+                current[reauthKey] = true
+            }
+        }
     }
 
     suspend fun save(token: String, mode: TokenMode) = context.dataStore.edit {
         val clean = token.trim()
         it[tokenKey] = if (clean.isBlank()) "" else cipher.encrypt(clean)
         it[modeKey] = mode.name
+        it[reauthKey] = false
     }
 }

@@ -18,4 +18,5 @@
     <string name="search_suggestions">搜索历史和建议</string><string name="search_empty">未找到内容。请尝试更短的名称或 privacy、SSH、AI 等类别。</string>
     <string name="update_channel">应用更新</string><string name="updates_available">有可用更新</string>
     <string name="appearance_language">外观和语言</string><string name="theme_title">主题</string><string name="theme_dynamic">Material You</string><string name="theme_frctl">FRCTL 霓虹</string><string name="language_title">语言</string><string name="language_system">跟随系统</string><string name="language_russian">Русский</string><string name="language_english">English</string><string name="language_chinese">中文</string><string name="language_german">Deutsch</string><string name="language_spanish">Español</string>
+    <string name="github_reauth_required">已保存的 GitHub 凭据无法再解密。请重新登录或保存新令牌。</string>
 </resources>

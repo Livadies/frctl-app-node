@@ -29,8 +29,8 @@ android {
         applicationId = "io.frctl.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 6
-        versionName = "1.4.0"
+        versionCode = 7
+        versionName = "1.5.0"
         buildConfigField("String", "GITHUB_CLIENT_ID", "\"${providers.gradleProperty("FRCTL_GITHUB_CLIENT_ID").orElse("").get()}\"")
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables.useSupportLibrary = true

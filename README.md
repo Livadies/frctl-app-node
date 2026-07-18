@@ -1,42 +1,52 @@
-# FRCTL — открытая платформа приложений и удалённых рабочих сред
+# FRCTL — open apps and remote-work environments
 
-FRCTL объединяет в одной оболочке живой каталог открытых Android‑приложений и ИИ‑моделей, локальные подключения SSH/PuTTY и RustDesk, изолированные рабочие среды и контролируемые workflow. Публичная часть бесплатна и ничего не исполняет на компьютере пользователя; опасные действия доступны только локальному FRCTL Node после подтверждения.
+FRCTL is an open marketplace shell for Android applications, Hugging Face models, local SSH/PuTTY and RustDesk connections, isolated workspaces, and controlled workflows. Public catalog browsing is free and does not execute anything on the user's computer. Sensitive actions are available only through the local FRCTL Node and require user confirmation.
 
-## Что уже работает
+## What works today
 
-- Android‑приложение 1.4.0: Room‑офлайн, библиотека, Material You, пять языков, анимации и проверка обновлений;
-- нативное приложение FRCTL для Windows 0.4.0: тот же marketplace и локальные SSH/PuTTY, RustDesk, Docker Sandbox и Browser Workspace;
-- FRCTL Node 0.6.0: allowlist, закрепление SSH host key, workflow, системное подтверждение, HMAC-аудит, SSE, экспорт и пять языков интерфейса;
-- Hugging Face Space: бесплатная браузерная витрина из 48 живых карточек, фильтры, безопасный dry‑run и локальная микро‑модель следующего действия;
-- локальный Python Hub, Docker Compose и Kubernetes‑манифесты с ограниченными привилегиями;
-- автотесты Android/Hub и 34 security/regression теста Node плюс сборка APK в CI.
+- **Android 1.5.0:** a live GitHub/Hugging Face catalog, Room offline cache, favorites, update checks, five interface languages, private on-device recommendations, and local AI;
+- **FRCTL for Windows 0.4.0:** the same marketplace plus local SSH/PuTTY, RustDesk, Docker Sandbox, and Browser Workspace launchers;
+- **FRCTL Node 0.6.0:** allowlists, pinned SSH host keys, workflows, native confirmation, HMAC audit chains, server-sent audit updates, and verified export;
+- **Hugging Face Space:** a free browser showcase with live cards, filters, safe dry-runs, and no privileged execution;
+- local Python Hub, Docker Compose, and restricted Kubernetes manifests;
+- Android, Hub, and Node regression tests plus APK builds in GitHub Actions.
 
-## Проверить без установки
+## Local AI on Android
 
-Откройте [публичный FRCTL Hub](https://livadies-frctl-hub.static.hf.space/). В верхней части должны появиться карточки GitHub и Hugging Face со статусом `LIVE CATALOG`. Выберите категорию «ИИ и модели» или введите запрос. Ниже можно выбрать RustDesk, указать `10.0.0.12:21118` и сформировать безопасный dry‑run.
+FRCTL can download a small, explicitly allowlisted model from `huggingface.co` and run it through the MediaPipe LLM Inference API directly on the phone.
 
-Строка `root:password@server.example` должна быть отклонена: credentials в адресе запрещены.
+- Model downloads support progress, cancellation, resume, storage/RAM checks, and mandatory SHA-256 verification.
+- After the model is downloaded, chat and README summaries work without a network connection, including in airplane mode.
+- Chat history stays in memory and is cleared when the chat screen closes.
+- Prompts, summaries, and interest history are never sent to FRCTL, GitHub, or Hugging Face.
+- The default setting permits model downloads only on an unmetered network.
+- Device requirements depend on the selected model; the smallest catalog entry is intended for lower-memory devices, while larger models require several gigabytes of free RAM and storage.
 
-## Windows
+Open the Android home screen and select **Run AI on your phone**. Models marked **Runs on-device** are supported. Once a model is ready, the hero card becomes a direct shortcut to the private offline chat.
 
-Готовый архив после сборки находится в `hub/windows/dist/FRCTL-Windows-0.4.0.zip`. После распаковки запустите `install-windows.ps1` или сам EXE. Исходники и сборочная инструкция: [hub/windows/README.md](hub/windows/README.md).
+## Try the public showcase
+
+Open the [public FRCTL Hub](https://livadies-frctl-hub.static.hf.space/). The catalog should show GitHub and Hugging Face cards with a `LIVE CATALOG` status. Select a category or search for an app or model. The connection form produces a safe dry-run only; a target containing embedded credentials such as `root:password@server.example` is rejected.
+
+## Build Android
+
+```powershell
+$env:JAVA_HOME = "C:\Program Files\Android\Android Studio1\jbr"
+.\gradlew.bat testDebugUnitTest assembleDebug
+```
+
+Release signing values are read only from `FRCTL_KEYSTORE_PATH`, `FRCTL_KEYSTORE_PASSWORD`, `FRCTL_KEY_ALIAS`, and `FRCTL_KEY_PASSWORD`. Signing secrets are not stored in this repository.
+
+## Build Windows
 
 ```powershell
 cd hub\windows
 .\build-windows.ps1
 ```
 
-## Android
+The distributable archive is written to `hub/windows/dist/FRCTL-Windows-0.4.0.zip`. See [the Windows guide](hub/windows/README.md).
 
-Откройте проект в Android Studio или выполните:
-
-```powershell
-.\gradlew.bat testDebugUnitTest assembleDebug
-```
-
-Подписанная release‑сборка берёт параметры только из переменных `FRCTL_KEYSTORE_PATH`, `FRCTL_KEYSTORE_PASSWORD`, `FRCTL_KEY_ALIAS`, `FRCTL_KEY_PASSWORD`. Секреты в репозитории не хранятся.
-
-## FRCTL Node
+## Run FRCTL Node
 
 ```powershell
 cd hub\node
@@ -44,36 +54,36 @@ cd hub\node
 .\run-node.cmd
 ```
 
-Панель откроется только локально: http://127.0.0.1:7878/. Node не принимает пароли, токены или произвольные команды через API. Полная инструкция: [hub/node/README.md](hub/node/README.md).
+The panel listens locally at `http://127.0.0.1:7878/`. It does not accept passwords, tokens, or arbitrary shell commands through its API. See [the Node guide](hub/node/README.md).
 
-## Как связаны компоненты
+## Component boundaries
 
 ```text
 GitHub API ─┐
-            ├─ единый нормализованный каталог ─┬─ Android 1.4
-HF API ─────┘                                  ├─ Windows 0.4 / Node 0.6
-                                               └─ публичный Space
+            ├─ normalized catalog ─┬─ Android 1.5
+HF API ─────┘                      ├─ Windows 0.4 / Node 0.6
+                                   └─ public Hugging Face Space
 
-Публичный Space ── только просмотр и dry-run
-Локальный Node ─── подтверждение ── разрешённый клиент/сервер ── локальный аудит
+Public Space ── browsing and dry-run only
+Local Node ──── user confirmation ── allowlisted client/server ── local audit
 ```
 
-GitHub и Hugging Face дают публичный каталог бесплатно в пределах их лимитов. GitHub Actions может бесплатно тестировать и собирать публичный проект, но не является постоянно работающим сервером. Реальные подключения и контейнеры используют ресурсы компьютера пользователя или его сервера.
+GitHub and Hugging Face provide the public catalog within their free-service limits. GitHub Actions can test and build a public project, but it is not a permanently running server. Real remote sessions, containers, and local-model inference use the user's computer, phone, or server.
 
-## Честные границы версии
+## Current limitations
 
-- это рабочая product alpha, а не сертифицированное средство защиты информации;
-- соответствие ФСТЭК требует отдельной модели угроз, документации, безопасного цикла разработки и испытаний в аккредитованной лаборатории;
-- P2P‑пул ресурсов, расчёты, блокчейн‑реестр и OAuth2‑инфраструктуры ещё не реализованы;
-- Windows EXE пока не подписан коммерческим Authenticode‑сертификатом;
-- сторонние приложения и модели требуют проверки лицензии, издателя, подписи и контрольной суммы.
+- This is a working product alpha, not a certified information-security product.
+- FSTEC compliance requires a threat model, formal documentation, a secure development lifecycle, and evaluation by an accredited laboratory.
+- P2P resource pooling, settlement, a blockchain registry, and general OAuth2 infrastructure are not implemented yet.
+- The Windows executable is not signed with a commercial Authenticode certificate.
+- Third-party apps and models still require license, publisher, signature, and checksum review.
 
-## Документация и восстановление
+## Documentation and recovery
 
-- [Как полностью восстановить проект](RECOVERY_RU.md)
-- [Архитектура и границы доверия](hub/docs/ARCHITECTURE.md)
-- [Демонстрация инвестору](hub/docs/INVESTOR_DEMO_RU.md)
-- [Разрыв до сертификации ФСТЭК](hub/docs/FSTEC_GAP.md)
-- [Организационная модель НКО](hub/docs/NKO_MODEL.md)
+- [Full project recovery guide](RECOVERY_RU.md)
+- [Architecture and trust boundaries](hub/docs/ARCHITECTURE.md)
+- [Investor demo](hub/docs/INVESTOR_DEMO_RU.md)
+- [FSTEC certification gap](hub/docs/FSTEC_GAP.md)
+- [Non-profit organizational model](hub/docs/NKO_MODEL.md)
 
-Лицензия проекта: [LICENSE](LICENSE).
+License: [LICENSE](LICENSE).

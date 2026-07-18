@@ -4,6 +4,7 @@ let plannedPayload = null;
 let plannedWorkflow = null;
 let marketplaceData = null;
 let marketplaceFilter = "all";
+let auditStream = null;
 
 function escapeHtml(value) {
   return String(value).replace(/[&<>"']/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
@@ -172,6 +173,22 @@ async function loadAudit() {
     <div class="audit-row"><span>${escapeHtml(item.at)}</span><b>${escapeHtml(item.connector)}</b><span>${escapeHtml(item.target_hash.slice(0,16))}…</span><span class="${["launched","executed"].includes(item.result) ? "good" : "bad"}">${escapeHtml(item.result)}</span></div>`).join("") : "Записей пока нет.";
 }
 
+function renderAudit(data) {
+  $("#audit-state").textContent = data.verified ? "VERIFIED" : "BROKEN";
+  $("#audit").innerHTML = data.records.length ? data.records.slice().reverse().map(item => `
+    <div class="audit-row"><span>${escapeHtml(item.at)}</span><b>${escapeHtml(item.connector)}</b><span>${escapeHtml(item.target_hash.slice(0,16))}…</span><span class="${["launched","executed"].includes(item.result) ? "good" : "bad"}">${escapeHtml(item.result)}</span></div>`).join("") : "Записей пока нет.";
+}
+
+function connectAuditStream() {
+  if (auditStream) auditStream.close();
+  auditStream = new EventSource("/api/audit/stream");
+  auditStream.addEventListener("audit", event => {
+    renderAudit(JSON.parse(event.data));
+    $("#audit-live").textContent = "LIVE";
+  });
+  auditStream.onerror = () => { $("#audit-live").textContent = "ПЕРЕПОДКЛЮЧЕНИЕ"; };
+}
+
 function workflowPayload() {
   const form = new FormData($("#workflow-form"));
   return {
@@ -240,7 +257,7 @@ $("#workflow-run").addEventListener("click", async () => {
 });
 
 async function load() {
-  try { renderStatus(await api("/api/status")); await Promise.all([loadAudit(), loadMarketplace()]); }
+  try { renderStatus(await api("/api/status")); await Promise.all([loadAudit(), loadMarketplace()]); connectAuditStream(); }
   catch (error) { $("#node-state").textContent = "NODE ERROR"; message(error.message, "error"); }
 }
 
@@ -248,6 +265,11 @@ $("#connector").addEventListener("change", connectorChanged);
 $("#ssh-client").addEventListener("change", sshClientChanged);
 $("#refresh").addEventListener("click", load);
 $("#audit-refresh").addEventListener("click", loadAudit);
+$("#audit-verify").addEventListener("click", async () => {
+  const data = await api("/api/audit");
+  renderAudit(data);
+  message(data.verified ? "Целостность журнала подтверждена." : "Целостность журнала нарушена.", data.verified ? "success" : "error");
+});
 $("#market-refresh").addEventListener("click", loadMarketplace);
 $("#market-search").addEventListener("input", renderMarketplace);
 setInterval(loadMarketplace, 5 * 60 * 1000);

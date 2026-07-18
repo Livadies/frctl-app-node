@@ -43,6 +43,14 @@ class MarketplaceTests(unittest.TestCase):
         self.assertTrue(result["degraded"])
         self.assertTrue(result["offline"])
 
+    def test_github_topics_are_primary_category_source(self):
+        payload = {"items": [{
+            "full_name": "org/player", "name": "player", "description": "Music and video player",
+            "html_url": "https://github.com/org/player", "topics": ["security", "android-app"],
+        }]}
+        entry = MarketplaceService._github_entries(payload)[0]
+        self.assertEqual("security", entry["category"])
+
 
 if __name__ == "__main__":
     unittest.main()

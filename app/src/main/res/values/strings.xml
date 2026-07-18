@@ -14,4 +14,7 @@
     <string name="sign_in_github">Sign in with GitHub</string><string name="enter_code">Enter this code on GitHub</string><string name="connected">GitHub connected</string>
     <string name="oauth_setup_needed">Browser opened. Create a read-only token and paste it below. Native Device Flow requires the FRCTL OAuth client ID.</string>
     <string name="token_alternative">Or use a personal token</string><string name="github_token">GitHub token</string><string name="save">Save access</string><string name="saved">Saved on this device</string><string name="local_only">Credentials stay in private app storage and are never sent to an FRCTL server.</string>
+    <string name="offline_catalog_date">Offline catalog from %1$s</string><string name="favorites">Favorites</string><string name="installed_library">Installed library</string><string name="add_favorite">Add to favorites</string><string name="in_favorites">In favorites</string><string name="mark_installed">Mark installed</string><string name="marked_installed">Installed</string>
+    <string name="search_suggestions">Search history and suggestions</string><string name="search_empty">Nothing found. Try a shorter name or a category such as privacy, SSH or AI.</string>
+    <string name="update_channel">App updates</string><string name="updates_available">Updates are available</string>
 </resources>

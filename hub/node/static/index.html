@@ -5,9 +5,10 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#06100e">
   <title>FRCTL Node</title>
-  <link rel="stylesheet" href="/styles.css?v=0.4.0">
-  <link rel="stylesheet" href="/workflow.css?v=0.4.0">
-  <link rel="stylesheet" href="/marketplace.css?v=0.4.0">
+  <link rel="stylesheet" href="/styles.css?v=0.5.0">
+  <link rel="stylesheet" href="/workflow.css?v=0.5.0">
+  <link rel="stylesheet" href="/marketplace.css?v=0.5.0">
+  <link rel="stylesheet" href="/audit.css?v=0.5.0">
 </head>
 <body>
   <header>
@@ -62,7 +63,7 @@
           <li>Credentials и arbitrary commands запрещены</li>
           <li>Target обязан пройти allowlist</li>
           <li>Каждый запуск подтверждается нативным окном</li>
-          <li>Аудит связан SHA-256 hash chain</li>
+          <li>Аудит защищён HMAC-SHA-256 chain</li>
         </ul>
         <hr>
         <p class="muted">Разрешённые цели</p><div id="allowlist" class="tags"></div>
@@ -90,11 +91,11 @@
     </section>
 
     <section class="panel audit-panel">
-      <div class="title-row"><div><p class="eyebrow">LOCAL AUDIT</p><h2>Последние операции</h2></div><button id="audit-refresh" class="ghost">Обновить</button></div>
+      <div class="title-row"><div><p class="eyebrow">LOCAL AUDIT · <span id="audit-live">ПОДКЛЮЧЕНИЕ</span></p><h2>Последние операции</h2></div><div class="market-actions"><button id="audit-verify" class="ghost">Проверить целостность</button><a class="ghost" href="/api/audit/export" download>Экспорт JSONL</a><button id="audit-refresh" class="ghost">Обновить</button></div></div>
       <div id="audit" class="audit">Записей пока нет.</div>
     </section>
   </main>
-  <footer>FRCTL Node 0.4 Product Alpha · Windows‑маркетплейс и локальный execution boundary · не сертифицированное СЗИ</footer>
-  <script src="/app.js?v=0.4.0" defer></script>
+  <footer>FRCTL Node 0.5 Product Alpha · Windows‑маркетплейс и локальный execution boundary · не сертифицированное СЗИ</footer>
+  <script src="/app.js?v=0.5.0" defer></script>
 </body>
 </html>

@@ -1,9 +1,13 @@
 package io.frctl.app
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -47,8 +51,13 @@ private val Void = Color(0xFF090B10)
 private val Panel = Color(0xFF141820)
 
 class MainActivity : ComponentActivity() {
+    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
         setContent { FrctlTheme { FrctlApp() } }
     }
 }
@@ -69,7 +78,16 @@ class MainActivity : ComponentActivity() {
     }
     BackHandler(screen != "home") { screen = "home" }
     when (screen) {
-        "detail" -> state.selected?.let { DetailScreen(it) { screen = "home" } }
+        "detail" -> state.selected?.let { selected ->
+            val key = libraryKey(selected)
+            DetailScreen(
+                selected,
+                favorite = key in state.favoriteIds,
+                installed = key in state.installedIds,
+                toggleFavorite = { vm.toggleFavorite(selected) },
+                toggleInstalled = { vm.toggleInstalled(selected) },
+            ) { screen = "home" }
+        }
         "settings" -> SettingsScreen { screen = "home" }
         else -> MainShell(screen, { screen = it }, state, vm)
     }
@@ -101,8 +119,8 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable private fun HomeScreen(state: SearchState, refresh: () -> Unit, chooseCategory: (MarketCategory) -> Unit, open: (AppEntry) -> Unit) {
-    val allEntries = remember(state.featured, state.trending, state.models) {
-        (state.featured + state.trending + state.models).distinctBy { "${it.kind}:${it.id}" }
+    val allEntries = remember(state.libraryEntries, state.featured, state.trending, state.models) {
+        (state.libraryEntries + state.featured + state.trending + state.models).distinctBy { "${it.kind}:${it.id}" }
     }
     val filtered = remember(allEntries, state.category) { allEntries.filter { MarketplaceClassifier.matches(it, state.category) }.sortedByDescending { it.updatedAt } }
     LazyColumn(contentPadding = PaddingValues(bottom = 24.dp)) {
@@ -119,6 +137,9 @@ class MainActivity : ComponentActivity() {
                         if (state.cached) AssistChip(onClick = {}, label = { Text(stringResource(R.string.cached_catalog)) }, leadingIcon = { Icon(Icons.Default.OfflineBolt, null) })
                     }
                     if (state.lastUpdatedAt > 0) Text(stringResource(R.string.updated_at, formattedTime(state.lastUpdatedAt)), style = MaterialTheme.typography.labelSmall, color = Color(0xFF8E9AA8))
+                    if (state.offline && state.cachedAt != null) {
+                        Text(stringResource(R.string.offline_catalog_date, formattedDateTime(state.cachedAt)), color = Color(0xFFFFC46B), modifier = Modifier.padding(top = 8.dp), fontWeight = FontWeight.Bold)
+                    }
                 }
             }
         }
@@ -135,9 +156,23 @@ class MainActivity : ComponentActivity() {
             item { SectionTitle("${categoryLabel(state.category)} · ${filtered.size}") }
             if (filtered.isEmpty() && !state.loading) item { EmptyCategory() }
             items(filtered, key = { "${it.kind}:${it.id}" }) { AppRow(it, open) }
-        } else if (state.featured.isNotEmpty()) {
+        } else if (state.favoriteIds.isNotEmpty()) {
+            val favorites = allEntries.filter { libraryKey(it) in state.favoriteIds }
+            if (favorites.isNotEmpty()) {
+                item { SectionTitle(stringResource(R.string.favorites)) }
+                items(favorites, key = { "favorite:${it.kind}:${it.id}" }) { AppRow(it, open) }
+            }
+        }
+        if (state.category == MarketCategory.ALL && state.featured.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.featured)) }
             item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(state.featured.take(8), key = { it.id }) { FeaturedCard(it, open) } } }
+        }
+        if (state.category == MarketCategory.ALL && state.installedIds.isNotEmpty()) {
+            val installed = allEntries.filter { libraryKey(it) in state.installedIds }
+            if (installed.isNotEmpty()) {
+                item { SectionTitle(stringResource(R.string.installed_library)) }
+                items(installed, key = { "installed:${it.kind}:${it.id}" }) { AppRow(it, open) }
+            }
         }
         if (state.category == MarketCategory.ALL && state.models.isNotEmpty()) {
             item { SectionTitle(stringResource(R.string.ai_models)) }
@@ -193,12 +228,22 @@ class MainActivity : ComponentActivity() {
         Text(stringResource(R.string.search_title), style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Black, modifier = Modifier.padding(20.dp))
         OutlinedTextField(state.query, query, Modifier.fillMaxWidth().padding(horizontal = 16.dp).testTag("search_field"), placeholder = { Text(stringResource(R.string.search_hint)) }, leadingIcon = { Icon(Icons.Default.Search, null) }, trailingIcon = { IconButton(search) { Icon(Icons.Default.ArrowForward, stringResource(R.string.search)) } }, singleLine = true)
         if (state.loading) LinearProgressIndicator(Modifier.fillMaxWidth().padding(top = 8.dp))
-        LazyColumn { items(state.apps, key = { it.id }) { AppRow(it, open) } }
+        if (state.query.isBlank() && state.apps.isEmpty()) {
+            Text(stringResource(R.string.search_suggestions), color = Color(0xFFAEB8C5), modifier = Modifier.padding(18.dp))
+            LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                items((state.searchHistory + listOf("remote desktop", "privacy", "text generation")).distinct().take(8)) { suggestion ->
+                    AssistChip(onClick = { query(suggestion) }, label = { Text(suggestion) }, leadingIcon = { Icon(Icons.Default.History, null) })
+                }
+            }
+        } else if (!state.loading && state.apps.isEmpty()) {
+            Text(stringResource(R.string.search_empty), color = Color(0xFFAEB8C5), modifier = Modifier.padding(18.dp))
+        }
+        LazyColumn { items(state.apps, key = { "search:${it.kind}:${it.id}" }) { AppRow(it, open) } }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Composable private fun DetailScreen(app: AppEntry, back: () -> Unit) {
+@Composable private fun DetailScreen(app: AppEntry, favorite: Boolean, installed: Boolean, toggleFavorite: () -> Unit, toggleInstalled: () -> Unit, back: () -> Unit) {
     val context = LocalContext.current
     val isModel = app.kind == EntryKind.AI_MODEL
     var showApkWarning by remember { mutableStateOf(false) }
@@ -235,6 +280,12 @@ class MainActivity : ComponentActivity() {
         LazyColumn(Modifier.padding(pad), contentPadding = PaddingValues(18.dp)) {
             item { Row(verticalAlignment = Alignment.CenterVertically) { AppIcon(app, 88); Spacer(Modifier.width(16.dp)); Column { Text(app.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(app.owner, color = Cyan); Text(if (isModel) "↓ ${compact(app.downloads)} · ♥ ${compact(app.stars)}" else "★ ${compact(app.stars)}") } } }
             item { Text(app.description, modifier = Modifier.padding(vertical = 18.dp), maxLines = 5) }
+            item {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth().padding(bottom = 10.dp)) {
+                    FilterChip(selected = favorite, onClick = toggleFavorite, label = { Text(stringResource(if (favorite) R.string.in_favorites else R.string.add_favorite)) }, leadingIcon = { Icon(if (favorite) Icons.Default.Favorite else Icons.Default.FavoriteBorder, null) })
+                    FilterChip(selected = installed, onClick = toggleInstalled, label = { Text(stringResource(if (installed) R.string.marked_installed else R.string.mark_installed)) }, leadingIcon = { Icon(Icons.Default.Inventory2, null) })
+                }
+            }
             item { Button(enabled = isModel || app.apkUrl != null, onClick = { if (isModel) open(app.repoUrl) else showApkWarning = true }, modifier = Modifier.fillMaxWidth().height(54.dp).testTag("install_button"), shape = RoundedCornerShape(16.dp)) { Icon(if (isModel) Icons.Default.Psychology else Icons.Default.Download, null); Spacer(Modifier.width(8.dp)); Text(if (isModel) stringResource(R.string.open_model) else if (app.apkUrl == null) stringResource(R.string.no_apk) else stringResource(R.string.install)) } }
             if (!isModel) item { OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(app.repoUrl))) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(stringResource(R.string.open_github)) } }
             item { SectionTitle(stringResource(R.string.full_description)) }
@@ -271,6 +322,7 @@ class MainActivity : ComponentActivity() {
 @Composable private fun ErrorCard(text: String, retry: () -> Unit) = Card(Modifier.fillMaxWidth().padding(16.dp), colors = CardDefaults.cardColors(containerColor = Color(0xFF321E27))) { Column(Modifier.padding(16.dp)) { Text(text); TextButton(retry) { Text(stringResource(R.string.retry)) } } }
 private fun compact(value: Int) = when { value >= 1_000_000 -> "%.1fM".format(value / 1_000_000f); value >= 1_000 -> "%.1fK".format(value / 1_000f); else -> value.toString() }
 private fun formattedTime(value: Long): String = DateTimeFormatter.ofPattern("HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(value))
+private fun formattedDateTime(value: Long): String = DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm").withZone(ZoneId.systemDefault()).format(Instant.ofEpochMilli(value))
 private fun updatedSuffix(value: String): String = runCatching { " · " + DateTimeFormatter.ofPattern("dd.MM HH:mm").withZone(ZoneId.systemDefault()).format(Instant.parse(value)) }.getOrDefault("")
 
 @Composable private fun categoryLabel(category: MarketCategory): String = stringResource(when (category) {

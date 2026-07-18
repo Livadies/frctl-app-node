@@ -58,4 +58,10 @@ class RawParsersTest {
         assertTrue(catalogHttpError(403, false, null)!!.contains("Catalog source"))
         assertEquals(null, catalogHttpError(200, true, null))
     }
+
+    @Test fun persistentCacheTtlRejectsStaleAndFutureRows() {
+        assertTrue(isCacheFresh(savedAt = 1_000, now = 1_200, ttl = 300))
+        assertEquals(false, isCacheFresh(savedAt = 1_000, now = 1_300, ttl = 300))
+        assertEquals(false, isCacheFresh(savedAt = 1_301, now = 1_300, ttl = 300))
+    }
 }

@@ -21,6 +21,7 @@ class AuditLog:
         self.key_path = key_path or path.with_name("audit.key")
         self.limit = limit
         self.lock = threading.Lock()
+        self.changed = threading.Condition(self.lock)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         if not self.path.exists():
             self.path.touch()
@@ -125,7 +126,7 @@ class AuditLog:
                 return False
 
     def append(self, *, connector: str, action: str, target: str, result: str, command: list[str], evidence: str | None = None) -> dict[str, Any]:
-        with self.lock:
+        with self.changed:
             records = self._records_unlocked()
             if records and not self._verify_records(records):
                 raise RuntimeError("Целостность журнала аудита нарушена; новая запись отклонена")
@@ -148,9 +149,30 @@ class AuditLog:
                 records = self._resign(records[-self.limit :])
                 record = records[-1]
             self._write_records_unlocked(records)
+            self.changed.notify_all()
             return record
 
     def recent(self, count: int = 20) -> list[dict[str, Any]]:
         with self.lock:
             records = self._records_unlocked()[-max(1, min(count, 100)) :]
+        return self._public(records)
+
+    @staticmethod
+    def _public(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
         return [{key: value for key, value in record.items() if key not in {"command_hash", "previous"}} for record in records]
+
+    def wait_for_change(self, after_hash: str, timeout: float = 15.0) -> list[dict[str, Any]]:
+        with self.changed:
+            def has_changed() -> bool:
+                records = self._records_unlocked()
+                latest = str(records[-1].get("hash", "")) if records else ""
+                return latest != after_hash
+
+            self.changed.wait_for(has_changed, timeout=timeout)
+            return self._public(self._records_unlocked()[-20:])
+
+    def export_bytes(self) -> bytes:
+        with self.lock:
+            if not self._verify_records(self._records_unlocked()):
+                raise RuntimeError("Целостность журнала аудита нарушена")
+            return self.path.read_bytes()

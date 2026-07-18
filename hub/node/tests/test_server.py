@@ -133,6 +133,17 @@ class ServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual("ai-model", body["entries"][0]["kind"])
 
+    def test_audit_can_be_verified_exported_and_streamed(self):
+        status, body, _ = self.request("/api/audit")
+        self.assertEqual(200, status)
+        self.assertTrue(body["verified"])
+        with self.opener.open(self.base + "/api/audit/export") as response:
+            self.assertEqual("application/x-ndjson; charset=utf-8", response.headers["Content-Type"])
+            self.assertIn("attachment", response.headers["Content-Disposition"])
+        with self.opener.open(self.base + "/api/audit/stream", timeout=3) as response:
+            self.assertEqual("text/event-stream; charset=utf-8", response.headers["Content-Type"])
+            self.assertEqual(b"event: audit\n", response.readline())
+
     def test_plan_and_launch(self):
         payload = {"connector": "ssh", "target": "server.example", "client": "openssh", "user": "ubuntu"}
         status, plan, _ = self.request("/api/plan", payload)

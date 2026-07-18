@@ -19,6 +19,15 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio1\jbr"
 
 ## История версий
 
+### v1.5.0 / FRCTL Node 0.6 — Local AI and private personalization — 2026-07-18
+
+- four pinned Hugging Face model artifacts can be downloaded with resume, cancellation, RAM/storage checks, and mandatory SHA-256 verification;
+- MediaPipe runs supported models locally for streamed, memory-only chat and private README summaries;
+- a home-screen hero card opens the runnable-model catalog and becomes an offline-chat shortcut after the first model download;
+- private on-device personalization ranks the catalog after ten interactions using a deterministic seven-day half-life; history is limited to 500 events and can be disabled or erased;
+- all new interfaces are available in English, Russian, Chinese, German, and Spanish;
+- Android version raised to 1.5.0 (7); no telemetry or interaction-data network calls were added.
+
 ### v1.4.0 / FRCTL Node 0.6 — UI and i18n phase 3 — 2026-07-18
 
 - the Android monolith was split into home, search, detail, settings, reusable components and theme modules;

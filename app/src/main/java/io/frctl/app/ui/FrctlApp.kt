@@ -76,7 +76,7 @@ private fun FrctlApp(vm: MainViewModel, themeMode: ThemeMode, setThemeMode: (The
                     }
                     "chat" -> chatModel?.let { model -> ChatScreen(model) { screen = "detail" } }
                     "settings" -> SettingsScreen(themeMode, setThemeMode, state.personalizationEnabled, state.interactionCount, vm::setPersonalization, vm::clearPersonalization) { screen = "home" }
-                    else -> MainShell(target, { screen = it }, state, vm)
+                    else -> MainShell(target, { screen = it }, state, vm) { model -> chatModel = model; screen = "chat" }
                 }
             }
         }
@@ -84,7 +84,7 @@ private fun FrctlApp(vm: MainViewModel, themeMode: ThemeMode, setThemeMode: (The
 }
 
 @Composable
-private fun MainShell(current: String, navigate: (String) -> Unit, state: SearchState, vm: MainViewModel) {
+private fun MainShell(current: String, navigate: (String) -> Unit, state: SearchState, vm: MainViewModel, openLocalChat: (LocalModelEntity) -> Unit) {
     Scaffold(bottomBar = {
         NavigationBar {
             listOf(
@@ -99,7 +99,7 @@ private fun MainShell(current: String, navigate: (String) -> Unit, state: Search
             when (current) {
                 "trending" -> CatalogList(stringResource(R.string.trending), state.trending, state.loading, state.error) { vm.select(it); navigate("detail") }
                 "search" -> SearchScreen(state, vm::query, vm::search) { vm.select(it); navigate("detail") }
-                else -> HomeScreen(state, { vm.loadHome(true) }, vm::category) { vm.select(it); navigate("detail") }
+                else -> HomeScreen(state, { vm.loadHome(true) }, vm::category, openLocalChat) { vm.select(it); navigate("detail") }
             }
         }
     }

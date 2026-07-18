@@ -18,4 +18,5 @@
     <string name="search_suggestions">Search history and suggestions</string><string name="search_empty">Nothing found. Try a shorter name or a category such as privacy, SSH or AI.</string>
     <string name="update_channel">App updates</string><string name="updates_available">Updates are available</string>
     <string name="appearance_language">Appearance and language</string><string name="theme_title">Theme</string><string name="theme_dynamic">Material You</string><string name="theme_frctl">FRCTL neon</string><string name="language_title">Language</string><string name="language_system">System default</string><string name="language_russian">Русский</string><string name="language_english">English</string><string name="language_chinese">中文</string><string name="language_german">Deutsch</string><string name="language_spanish">Español</string>
+    <string name="github_reauth_required">The saved GitHub credential can no longer be decrypted. Sign in again or save a new token.</string>
 </resources>

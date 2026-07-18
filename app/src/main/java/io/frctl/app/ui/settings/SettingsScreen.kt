@@ -43,6 +43,7 @@ fun SettingsScreen(themeMode: ThemeMode, setThemeMode: (ThemeMode) -> Unit, back
     var mode by remember { mutableStateOf(TokenMode.BEARER) }
     var message by remember { mutableStateOf<String?>(null) }
     var code by remember { mutableStateOf<String?>(null) }
+    val requiresReauth by store.requiresReauth.collectAsState(initial = false)
     val currentLanguage = AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore(',')
     val languages = listOf(
         LanguageOption("", R.string.language_system),
@@ -62,6 +63,7 @@ fun SettingsScreen(themeMode: ThemeMode, setThemeMode: (ThemeMode) -> Unit, back
             } }
             item { Text(stringResource(R.string.language_title), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)); languages.forEach { option -> Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(option.tag)) }) { RadioButton(selected = currentLanguage == option.tag || (currentLanguage.isBlank() && option.tag.isBlank()), onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(option.tag)) }); Text(stringResource(option.label)) } } }
             item { HorizontalDivider(Modifier.padding(vertical = 18.dp)); Text(stringResource(R.string.github_account), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(stringResource(R.string.github_benefit), color = Color(0xFFB7C0CC), modifier = Modifier.padding(vertical = 8.dp)) }
+            if (requiresReauth) item { Text(stringResource(R.string.github_reauth_required), color = MaterialTheme.colorScheme.error, fontWeight = FontWeight.Bold, modifier = Modifier.padding(bottom = 10.dp)) }
             item { Button(onClick = {
                 if (BuildConfig.GITHUB_CLIENT_ID.isBlank()) { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/settings/tokens/new?description=FRCTL&scopes="))); message = context.getString(R.string.oauth_setup_needed) }
                 else scope.launch { runCatching { val dc = auth.begin(BuildConfig.GITHUB_CLIENT_ID); code = dc.userCode; context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(dc.verificationUri))); val access = auth.awaitToken(BuildConfig.GITHUB_CLIENT_ID, dc); store.save(access, TokenMode.BEARER); token = access; code = null; context.getString(R.string.connected) }.onSuccess { message = it }.onFailure { message = it.message } }

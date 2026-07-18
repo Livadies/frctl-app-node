@@ -75,7 +75,7 @@ class MarketplaceService:
     def snapshot(self, force: bool = False) -> dict[str, Any]:
         with self.lock:
             now = time.time()
-            if self.memory and not force and now - self.memory[0] < self.ttl_seconds:
+            if self.memory and not force and now - self.memory[0] < self._memory_ttl(self.memory[1]):
                 return {**self.memory[1], "cached": True}
             try:
                 result = self._fetch()
@@ -91,6 +91,11 @@ class MarketplaceService:
                 empty = self._empty_snapshot()
                 self.memory = (now, empty)
                 return empty
+
+    def _memory_ttl(self, snapshot: dict[str, Any]) -> int:
+        if snapshot.get("degraded") and not snapshot.get("entries"):
+            return min(self.ttl_seconds, 30)
+        return self.ttl_seconds
 
     def _empty_snapshot(self) -> dict[str, Any]:
         return {

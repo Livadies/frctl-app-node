@@ -46,6 +46,13 @@ class NodeService:
         self.audit = audit or AuditLog(default_data_dir() / "node-audit.jsonl", config.audit_limit)
         self.marketplace = marketplace or MarketplaceService(default_data_dir() / "marketplace-cache.json")
         self.session = secrets.token_urlsafe(32)
+        self.audit_stream_slots = threading.BoundedSemaphore(value=4)
+
+    def try_open_audit_stream(self) -> bool:
+        return self.audit_stream_slots.acquire(blocking=False)
+
+    def close_audit_stream(self) -> None:
+        self.audit_stream_slots.release()
 
     def status(self) -> dict[str, Any]:
         confirmation_available = bool(getattr(self.confirmer, "available", True))
@@ -303,6 +310,9 @@ def handler_factory(service: NodeService):
             self.wfile.write(body)
 
         def _audit_stream(self) -> None:
+            if not service.try_open_audit_stream():
+                self._json({"error": "too_many_audit_streams"}, HTTPStatus.TOO_MANY_REQUESTS)
+                return
             self.send_response(HTTPStatus.OK)
             self.send_header("Content-Type", "text/event-stream; charset=utf-8")
             self.send_header("Cache-Control", "no-store")
@@ -320,7 +330,8 @@ def handler_factory(service: NodeService):
                         last_hash = str(records[-1].get("hash", ""))
             except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, TimeoutError):
                 self.close_connection = True
-                return
+            finally:
+                service.close_audit_stream()
 
         def _static(self, name: str, set_session: bool = False) -> None:
             target = (STATIC_DIR / name).resolve()

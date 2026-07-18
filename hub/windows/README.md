@@ -1,29 +1,33 @@
-# FRCTL для Windows 0.4
+# FRCTL for Windows 0.4
 
-Нативная Windows‑оболочка общей платформы FRCTL. Внутри одного окна она запускает локальный loopback‑узел и показывает:
+FRCTL for Windows is the native desktop shell of the FRCTL platform. One window starts a local loopback node and provides:
 
-- обновляемый каталог Android‑приложений из GitHub;
-- каталог ИИ‑моделей Hugging Face;
-- категории и поиск;
-- локальные OpenSSH/PuTTY, RustDesk, Docker и Browser Workspace;
-- фиксированные SSH‑workflow и SHA‑256 аудит.
+- a refreshable GitHub Android-app catalog;
+- a Hugging Face model catalog;
+- categories and search;
+- local OpenSSH/PuTTY, RustDesk, Docker, and Browser Workspace launchers;
+- fixed SSH workflows and SHA-256/HMAC audit receipts.
 
-Публичные каталоги не получают ключи. Все подключения и системные подтверждения выполняются только локальным процессом на `127.0.0.1`.
+Public catalog services never receive private keys. Connections and native confirmation dialogs run only in the local process bound to `127.0.0.1`.
 
-## Установка готовой сборки
+## Install a prepared build
 
-Распакуйте `FRCTL-Windows-0.4.0.zip`, затем выполните:
+Extract `FRCTL-Windows-0.4.0.zip`, then run:
 
 ```powershell
 .\install-windows.ps1
 ```
 
-После этого откройте **FRCTL** через меню «Пуск». Python конечному пользователю не нужен. Требуется установленный Microsoft Edge WebView2 Runtime, который входит в современные Windows 10/11.
+Open **FRCTL** from the Start menu. End users do not need Python. Microsoft Edge WebView2 Runtime is required and is already included with current Windows 10 and Windows 11 installations.
 
-## Сборка из исходников
+## Build from source
 
 ```powershell
 .\build-windows.ps1
 ```
 
-Скрипт создаёт изолированное окружение, устанавливает зафиксированные pywebview/PyInstaller и собирает автономный EXE. Результат находится в `dist`.
+The script creates an isolated build environment, installs pinned pywebview and PyInstaller dependencies, and produces the standalone executable under `dist`.
+
+## Security status
+
+The Windows build is a product alpha. It listens only on loopback, uses explicit allowlists and user confirmation, and does not bypass SSH or RustDesk authentication. It is not an FSTEC-certified security product, and the EXE is not yet signed with a commercial Authenticode certificate.

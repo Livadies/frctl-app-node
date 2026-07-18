@@ -8,24 +8,24 @@ app_file: index.html
 fullWidth: true
 header: mini
 license: apache-2.0
-short_description: Открытая local-first оболочка приложений и удалённых сред
+short_description: Open local-first shell for apps and remote environments
 ---
 
-# FRCTL Hub 0.6 — публичная демонстрация
+# FRCTL Hub 0.6 — public demo
 
-FRCTL Hub — открытая оболочка для каталога приложений и ИИ‑моделей, безопасного планирования подключений, изолированных рабочих сред и agent workflow.
+FRCTL Hub is an open interface for discovering apps and AI models, safely planning connections, presenting isolated workspaces, and demonstrating agent workflows.
 
-## Что можно проверить
+## What to verify
 
-1. Выберите язык в правом верхнем углу: русский, английский, китайский, немецкий или испанский.
-2. Дождитесь `LIVE CATALOG`: появятся 24 обновляемых GitHub‑проекта и 24 модели Hugging Face.
-3. Переключите категории или найдите модель через поиск.
-4. Выберите `RustDesk`, укажите `10.0.0.12:21118` и нажмите «Сформировать dry-run».
-5. Укажите `root:password@server.example`: адрес с credentials должен быть отклонён.
-6. После первой загрузки каталог сохраняется в локальный кэш на пять минут; планировщик работает локально и без сети.
+1. Select Russian, English, Chinese, German, or Spanish in the upper-right corner.
+2. Wait for `LIVE CATALOG`; the page loads 24 GitHub projects and 24 Hugging Face models.
+3. Change categories or search for a model.
+4. Select `RustDesk`, enter `10.0.0.12:21118`, and create a dry-run plan.
+5. Enter `root:password@server.example`; the target must be rejected because embedded credentials are forbidden.
+6. After the first load, the catalog remains in a five-minute browser cache and the planner itself can operate offline.
 
-Публичный Space не получает токены, пароли, адреса из планировщика или локальную историю. Он не выполняет удалённые команды. Реальное выполнение доступно только отдельно установленному FRCTL Node после явного подтверждения пользователя.
+The public Space receives no tokens, passwords, planner addresses, or local history. It does not execute remote commands. Real execution is available only through a separately installed FRCTL Node after explicit user confirmation.
 
-Подробный сценарий: [INVESTOR_DEMO_RU.md](INVESTOR_DEMO_RU.md).
+Detailed scenario: [INVESTOR_DEMO_RU.md](INVESTOR_DEMO_RU.md).
 
-FRCTL является инженерной product alpha, а не сертифицированным средством защиты информации.
+FRCTL is an engineering product alpha, not a certified information-security product.

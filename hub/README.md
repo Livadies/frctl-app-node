@@ -1,35 +1,37 @@
 # FRCTL Hub MVP
 
-FRCTL Hub — безопасный первый срез будущей оболочки для удалённых рабочих мест, OSS‑коннекторов, песочниц и ИИ‑workflow.
+FRCTL Hub is the safe first product slice of an open shell for remote workspaces, OSS connectors, sandboxes, and AI workflows.
 
-**Рабочая публичная демоверсия:** https://livadies-frctl-hub.static.hf.space/
+**Live public demo:** https://livadies-frctl-hub.static.hf.space/
 
-## Состав модуля
+## Modules
 
-| Каталог | Назначение |
+| Directory | Purpose |
 |---|---|
-| `hf-static/` | Бесплатная автономная демоверсия Hugging Face Static Space |
-| `space/frctl_hub/` | Локальный Python control plane и policy engine |
-| `space/static/` | Веб‑оболочка для локального control plane |
-| `space/tests/` | Unit- и HTTP‑тесты |
-| `node/` | Рабочий локальный Node для разрешённых запусков на Windows |
-| `windows/` | Автономная нативная Windows‑оболочка и сборка EXE |
-| `infra/` | Docker Compose и Kubernetes |
-| `docs/` | Архитектура, ФСТЭК, НКО и инвесторская проверка |
+| `hf-static/` | Free, self-contained Hugging Face Static Space |
+| `space/frctl_hub/` | Local Python control plane and policy engine |
+| `space/static/` | Web shell for the local control plane |
+| `space/tests/` | Unit and HTTP tests |
+| `node/` | Local Windows node for allowlisted launches |
+| `windows/` | Native Windows shell and standalone EXE build |
+| `infra/` | Docker Compose and Kubernetes manifests |
+| `docs/` | Architecture, FSTEC gap, non-profit model, and investor demo |
 
-## Возможности MVP
+## MVP capabilities
 
-- Chromium/Gecko‑совместимый интерфейс;
-- каталог SSH/PuTTY, RustDesk, Browser Workspace и Ephemeral Sandbox;
-- только `dry-run`: публичная часть не выполняет удалённые команды;
-- запрет credentials, query string и неподдерживаемых схем в target;
-- локальный микроагент следующего действия;
-- opt‑in телеметрия со строгим allowlist;
-- SHA‑256 hash chain аудиторских квитанций;
-- read-only контейнер, dropped capabilities и отключённый Kubernetes service-account token.
-- локальный FRCTL Node с SSH/PuTTY, RustDesk, Docker Sandbox и Browser Workspace.
+- Chromium/Gecko-compatible web interface;
+- marketplace for SSH/PuTTY, RustDesk, Browser Workspace, and Ephemeral Sandbox;
+- public `dry-run` planning that never executes remote commands;
+- rejection of embedded credentials, query strings, and unsupported target schemes;
+- a small local next-action helper;
+- an opt-in, strictly allowlisted telemetry prototype in the public control-plane demo;
+- SHA-256 receipt chains in the demo and HMAC-SHA-256 audit chains in FRCTL Node;
+- read-only containers with dropped capabilities and no Kubernetes service-account token;
+- local FRCTL Node support for SSH/PuTTY, RustDesk, Docker Sandbox, and Browser Workspace.
 
-## Запуск локального FRCTL Node
+The Android 1.5 application has a stricter privacy boundary: it contains no telemetry and keeps local-AI prompts and personalization data exclusively on the phone.
+
+## Run the local Node
 
 ```powershell
 cd hub\node
@@ -37,55 +39,49 @@ cd hub\node
 .\run-node.cmd
 ```
 
-Откройте http://127.0.0.1:7878. Подробная инструкция и модель безопасности: [node/README.md](node/README.md).
+Open `http://127.0.0.1:7878/`. See [the Node security and usage guide](node/README.md).
 
-## Запуск локального control plane
+## Run the local control plane
 
 ```powershell
 cd hub\space
 python -m frctl_hub.server
 ```
 
-Откройте http://127.0.0.1:7860.
+Open `http://127.0.0.1:7860/`.
 
-## Автотесты
+## Tests
 
 ```powershell
 cd hub\space
 python -m unittest discover -s tests -v
-```
 
-Для control plane ожидается `Ran 8 tests ... OK`. Для Node:
-
-```powershell
-cd hub\node
+cd ..\node
 python -m unittest discover -s tests -v
 ```
 
-Ожидаемый результат Node: `Ran 28 tests ... OK`.
-
-## Контейнер
+## Restricted container
 
 ```powershell
 docker compose -f hub\infra\docker-compose.yml up --build
 ```
 
-Контейнер слушает только `127.0.0.1:7860`, запускается без Linux capabilities и с read-only root filesystem.
+The container listens only on `127.0.0.1:7860`, has no Linux capabilities, and uses a read-only root filesystem.
 
-## Разделение бесплатной инфраструктуры
+## Free-service boundaries
 
-- Hugging Face Static Space — публичная браузерная демонстрация без сервера и секретов.
-- GitHub Actions — тесты, сборка контейнера, SBOM и provenance для публичного репозитория.
-- GitHub Releases — подписанные версии и манифесты.
-- Локальный FRCTL Node — будущий единственный компонент с правом запуска PuTTY/RustDesk и контейнеров.
+- Hugging Face Static Space hosts the public browser demo without a server or secrets.
+- GitHub Actions tests the project and builds artifacts, SBOMs, and provenance; it is not a 24/7 server.
+- GitHub Releases can distribute versioned artifacts and manifests.
+- The local FRCTL Node is the only component allowed to launch PuTTY, RustDesk, or containers, and each launch requires confirmation.
 
-Платный Docker Space не нужен для проверки MVP. Бесплатный Static Space обеспечивает интерактивную демонстрацию, а локальный control plane проверяется тестами и запуском на машине владельца.
+A paid Docker Space is not required to evaluate this MVP. Real sessions and workloads use the user's own computer or server.
 
-## Что отправить инвестору
+## Investor handoff
 
-Отправьте два URL:
+Share these two links:
 
-1. Демо: https://livadies-frctl-hub.static.hf.space/
-2. Инструкция: https://huggingface.co/spaces/livadies/frctl-hub/blob/main/INVESTOR_DEMO_RU.md
+1. Demo: https://livadies-frctl-hub.static.hf.space/
+2. Verification scenario: https://huggingface.co/spaces/livadies/frctl-hub/blob/main/INVESTOR_DEMO_RU.md
 
-Подробный локальный документ: [docs/INVESTOR_DEMO_RU.md](docs/INVESTOR_DEMO_RU.md).
+The repository also contains [the detailed local investor demo](docs/INVESTOR_DEMO_RU.md).

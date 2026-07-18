@@ -1,85 +1,83 @@
 # FRCTL Node 0.6 Product Alpha
 
-FRCTL Node — локальный доверенный компонент FRCTL Hub для запуска заранее разрешённых клиентов на компьютере пользователя. Он работает только на `127.0.0.1`, показывает системное окно подтверждения перед каждым запуском и сохраняет локальный журнал с HMAC-SHA-256-цепочкой целостности.
+FRCTL Node is the local trusted component of FRCTL Hub. It launches only pre-approved clients on the user's computer, listens exclusively on `127.0.0.1`, displays a native confirmation dialog before every launch, and stores a local HMAC-SHA-256 tamper-evident audit log.
 
-## Что действительно работает
+## Working capabilities
 
-- Windows‑витрина приложений GitHub и ИИ‑моделей Hugging Face с категориями, поиском, пятиминутным обновлением и офлайн-кэшем;
-- OpenSSH и PuTTY: открытие SSH-сеанса к узлу из allowlist;
-- RustDesk: открытие подключения по ID без передачи пароля в командной строке;
-- Docker Sandbox: одноразовый контейнер без сети, host mounts и Linux capabilities;
-- Browser Workspace: открытие разрешённого локального или корпоративного URL;
-- локальная панель состояния и предварительный просмотр команды;
-- запрет credentials, query string, произвольных команд и неизвестных параметров;
-- обязательное нативное подтверждение каждого запуска;
-- локальный tamper-evident журнал без сохранения адреса и команды в открытом виде.
-- встроенные allowlisted SSH-workflow с закреплённым host-key fingerprint;
-- возврат реального вывода удалённой системы и hash-квитанция результата.
+- Windows marketplace for GitHub Android apps and Hugging Face models, with categories, search, five-minute refresh, and offline cache;
+- OpenSSH and PuTTY sessions to allowlisted hosts;
+- RustDesk connections by ID without putting a password on the command line;
+- disposable Docker sandboxes without networking, host mounts, or Linux capabilities;
+- Browser Workspace for allowlisted local or corporate URLs;
+- local status panel and exact launch-plan preview;
+- rejection of credentials, query strings, arbitrary commands, and unknown parameters;
+- mandatory native confirmation for every launch;
+- a local audit chain that does not store the target or command in plaintext;
+- fixed, allowlisted SSH workflows with pinned host-key fingerprints;
+- returned remote-system output and a hashed result receipt.
 
-Node не является сервером удалённого администрирования и не обходит аутентификацию. Вход выполняет сам OpenSSH, PuTTY или RustDesk. Для чувствительных инфраструктур RustDesk следует подключать к собственному серверу.
+Node is not an unattended remote-administration server and does not bypass authentication. OpenSSH, PuTTY, or RustDesk performs the actual sign-in. Sensitive RustDesk deployments should use a self-hosted RustDesk server.
 
-## Требования
+## Requirements
 
-- Windows 10/11;
-- Python 3.11 или новее;
-- хотя бы один клиент: встроенный OpenSSH, PuTTY, RustDesk или запущенный Docker Desktop.
+- Windows 10 or Windows 11;
+- Python 3.11 or newer;
+- at least one available client: built-in OpenSSH, PuTTY, RustDesk, or Docker Desktop.
 
-Переносной `putty.exe` автоматически ищется также на обычном и OneDrive‑рабочем столе пользователя.
+A portable `putty.exe` is also discovered on the normal or OneDrive Desktop. A PPK file can be selected only after its exact path is added to `allowed_identity_files`. Node passes the path to PuTTY but does not read or store the key contents; previews redact the full path.
 
-PPK-файл можно выбрать в интерфейсе только после его явного добавления в `allowed_identity_files`. Node передаёт PuTTY ссылку на локальный файл, не читает и не сохраняет содержимое ключа; полный путь маскируется в preview.
+Automated workflows use official Plink 0.84. The installer downloads the pinned version and verifies its SHA-256 and Simon Tatham digital signature. For offline installation, use `.\install.ps1 -SkipPlink` and configure a trusted `plink.exe` manually.
 
-Для автоматических workflow используется официальный Plink 0.84. Установщик скачивает строго зафиксированную версию, сверяет SHA-256 и цифровую подпись Simon Tatham. Для офлайн-установки используйте `.\install.ps1 -SkipPlink` и укажите доверенный `plink.exe` в конфигурации.
+## Built-in SSH workflows
 
-## Готовые SSH-workflow
+- `diagnostics` is read-only and returns the user, hostname, OS, architecture, time, uptime, and disk information;
+- `proof-file` creates only `/tmp/frctl-proof.txt` with owner permissions and reads it back.
 
-- `diagnostics` — read-only: пользователь, hostname, ОС, архитектура, время, uptime и диск;
-- `proof-file` — создаёт только `/tmp/frctl-proof.txt` с правами владельца и читает его обратно.
+The API cannot accept an arbitrary command. Every server requires a pinned `host:port → fingerprint` record in `ssh_host_keys`, and a PPK path must be present in `allowed_identity_files`. Node rebuilds the plan and shows a separate system confirmation before execution.
 
-Workflow нельзя передать произвольную команду. Для каждого сервера обязательна запись `host:port → fingerprint` в `ssh_host_keys`, а PPK обязан находиться в `allowed_identity_files`. Перед выполнением Node повторно строит план и показывает отдельное системное подтверждение.
+No third-party Python packages are required at runtime.
 
-Внешние Python-пакеты не требуются.
+## Install and run
 
-## Установка
-
-Из PowerShell в этом каталоге:
+From PowerShell in this directory:
 
 ```powershell
 .\install.ps1
 ```
 
-Установщик проверит Python, создаст конфигурацию и ярлык **FRCTL Node** в меню «Пуск». Автозапуск не включается.
+The installer validates Python, creates a configuration, and adds an **FRCTL Node** Start-menu shortcut. Autostart is not enabled.
 
-Прямой запуск без установки:
+Run without installation:
 
 ```powershell
 .\run-node.cmd
 ```
 
-Панель откроется по адресу http://127.0.0.1:7878/.
+Open `http://127.0.0.1:7878/`.
 
-Удаление ярлыка:
+Remove the shortcut:
 
 ```powershell
 .\uninstall.ps1
 ```
 
-Удаление ярлыка вместе с локальными настройками и аудитом:
+Remove the shortcut, local settings, and audit data:
 
 ```powershell
 .\uninstall.ps1 -RemoveData
 ```
 
-## Настройка allowlist
+## Configure the allowlist
 
-При первом запуске создаётся файл:
+The first launch creates:
 
 ```text
 %LOCALAPPDATA%\FRCTL\node-config.json
 ```
 
-Пример находится в `node-config.example.json`. Допускаются точные имена, `*.local` и приватные CIDR. После изменения перезапустите Node. Адрес прослушивания изменить на внешний нельзя: конфигурация специально отклоняет всё, кроме loopback.
+Use `node-config.example.json` as a reference. Exact hostnames, `*.local`, and private CIDR ranges are supported. Restart Node after a change. The listen address cannot be exposed externally; configuration rejects anything except loopback.
 
-Свой SSH-сервер и PPK безопаснее добавить мастером (fingerprint сначала сверьте с администратором сервера по отдельному каналу):
+The safer way to add an SSH host and PPK is the configuration wizard. Verify the fingerprint with the server administrator over a separate trusted channel first:
 
 ```powershell
 .\configure-ssh-target.ps1 `
@@ -87,64 +85,65 @@ Workflow нельзя передать произвольную команду. 
   -Port 22 `
   -User operator `
   -IdentityFile "C:\Keys\server.ppk" `
-  -HostKey "ssh-ed25519 255 SHA256:ПРОВЕРЕННЫЙ_FINGERPRINT"
+  -HostKey "ssh-ed25519 255 SHA256:VERIFIED_FINGERPRINT"
 ```
 
-Мастер не копирует ключ и не читает его содержимое: он добавляет в локальный allowlist только путь к PPK, закреплённого пользователя и проверенный fingerprint.
+The wizard does not copy or read the key. It stores only the PPK path, pinned user, and verified fingerprint in the local allowlist.
 
-## Как проверить
+## Verify the build
 
 ```powershell
 python -m unittest discover -s tests -v
 node --check static\app.js
 ```
 
-В интерфейсе:
+Then verify the interface:
 
-1. выберите SSH и цель `localhost`;
-2. нажмите «Проверить план»;
-3. убедитесь, что в команде нет пароля;
-4. нажмите «Запустить» и отмените действие в системном окне — в аудите появится `denied`;
-5. цель `example.com` должна быть отклонена, пока она не внесена в allowlist.
+1. select SSH and target `localhost`;
+2. select **Preview plan** and confirm that no password appears;
+3. select **Launch**, then cancel the native dialog; the audit log should show `denied`;
+4. confirm that `example.com` is rejected until it is allowlisted.
 
-Тесты запуска используют подменённый launcher и не открывают реальные соединения.
+Launch tests use a fake launcher and never open real connections.
 
-Сборка переносимого архива:
+Build the portable archive:
 
 ```powershell
 .\build-release.ps1
 ```
 
-Результат появится в `dist\FRCTL-Node-0.6.0-win.zip`.
+The result is written to `dist\FRCTL-Node-0.6.0-win.zip`.
 
-## Файлы и границы безопасности
+## Local files and security boundary
 
-| Компонент | Расположение |
+| Component | Location |
 |---|---|
-| Конфигурация | `%LOCALAPPDATA%\FRCTL\node-config.json` |
-| Журнал аудита | `%LOCALAPPDATA%\FRCTL\node-audit.jsonl` |
-| Локальный HMAC-ключ аудита | `%LOCALAPPDATA%\FRCTL\audit.key` |
-| Кэш маркетплейса | `%LOCALAPPDATA%\FRCTL\marketplace-cache.json` |
-| Локальная панель | `http://127.0.0.1:7878/` |
+| Configuration | `%LOCALAPPDATA%\FRCTL\node-config.json` |
+| Audit log | `%LOCALAPPDATA%\FRCTL\node-audit.jsonl` |
+| Local audit HMAC key | `%LOCALAPPDATA%\FRCTL\audit.key` |
+| Marketplace cache | `%LOCALAPPDATA%\FRCTL\marketplace-cache.json` |
+| Local panel | `http://127.0.0.1:7878/` |
 
-API защищён случайной cookie текущего процесса, проверкой `Origin`, отдельным заголовком запроса, запретом CORS и ограничением размера JSON. Это уменьшает риск вызова Node вредоносной веб-страницей, но не заменяет защиту самой Windows и учётной записи пользователя.
+The API uses a random per-process cookie, strict `Origin` checks, a dedicated request header, no CORS, and bounded JSON bodies. These controls reduce the risk of a malicious web page calling Node, but they do not replace Windows account and endpoint security.
 
-Панель получает новые записи журнала через same-origin `GET /api/audit/stream` (Server-Sent Events). `GET /api/audit` выполняет полную проверку HMAC-цепочки, а `GET /api/audit/export` выдаёт JSONL только при целостном журнале. Все три маршрута требуют cookie текущего процесса.
+The panel receives updates from same-origin `GET /api/audit/stream`. `GET /api/audit` performs full HMAC-chain verification, and `GET /api/audit/export` returns JSONL only when the log is intact. All routes require the current process cookie. No more than four audit streams can be open concurrently; excess clients receive HTTP 429.
 
-## Threat model и граница локальной малвари
+## Local-malware boundary
 
-Cookie текущего процесса, `Origin`, `X-FRCTL-Request` и loopback‑адрес защищают API от вызова обычной вредоносной веб‑страницей. Они **не защищают** от программы, уже запущенной под той же учётной записью Windows: такой процесс может читать локальную память, файлы и управлять окнами пользователя.
+Loopback, the process cookie, `Origin`, and `X-FRCTL-Request` do not protect against software already running under the same Windows account. Such a process may be able to read user files, inspect memory, or control windows.
 
-Финальная граница перед запуском клиента — отдельный нативный диалог подтверждения. Пользователь должен проверить коннектор, цель и действие. Если `tkinter`/Tcl/Tk отсутствует, повреждён или не может открыть системное окно, Node работает `fail-closed`: любой запуск отклоняется. `/api/status` в этом случае возвращает `native_confirmation: false`, `confirmation_fail_closed: true` и безопасное имя причины. Это не ошибка, которую следует обходить отключением подтверждения: установите Python с Tcl/Tk или используйте штатную Windows‑сборку FRCTL.
+The final safety boundary is the separate native confirmation dialog. If `tkinter`/Tcl/Tk is missing or cannot show the dialog, Node fails closed and rejects every launch. `/api/status` reports `native_confirmation: false` and `confirmation_fail_closed: true`. Install Python with Tcl/Tk or use the packaged Windows build; do not bypass confirmation.
 
-Журнал подписывается HMAC‑SHA‑256 с локальным 256‑битным ключом `audit.key`, создаваемым при первом запуске с максимально доступными правами `0600`. Это обнаруживает переписывание журнала без доступа к ключу, но не спасает от локальной малвари, которая уже получила доступ к файлам пользователя. Проверка из командной строки:
+The audit log uses a local 256-bit HMAC-SHA-256 key created with the strongest available user-only permissions. This detects log rewriting when the key remains protected, but cannot defeat malware that already has access to the user's files.
+
+Verify the chain from PowerShell:
 
 ```powershell
 python -m frctl_node --verify-audit
 ```
 
-Команда возвращает код `0` только при целой цепочке. Если журнал повреждён, Node не добавляет новые записи поверх него.
+Exit code `0` means the chain is intact. Node refuses to append new records to a damaged chain.
 
-## Статус соответствия
+## Compliance status
 
-FRCTL Node является рабочей инженерной версией, но не сертифицированным средством защиты информации. Для заявления о соответствии требованиям ФСТЭК необходимы модель угроз, комплект ОРД/ТУ, безопасная разработка, управление уязвимостями, испытательная лаборатория и официальная оценка соответствия.
+FRCTL Node is a working engineering build, not a certified information-security product. Any FSTEC compliance claim requires a formal threat model, specifications and operational documentation, secure-development and vulnerability-management processes, an accredited test laboratory, and official conformity assessment.

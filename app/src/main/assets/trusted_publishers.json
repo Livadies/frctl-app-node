@@ -1,0 +1,11 @@
+{
+  "schema": 1,
+  "publishers": [
+    "bitwarden",
+    "F-Droid",
+    "GrapheneOS",
+    "keepassxreboot",
+    "mozilla-mobile",
+    "rustdesk"
+  ]
+}

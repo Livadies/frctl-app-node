@@ -1,5 +1,7 @@
 import tempfile
 import unittest
+import hashlib
+import json
 from pathlib import Path
 
 from frctl_node.audit import AuditLog
@@ -92,7 +94,22 @@ class PolicyTests(unittest.TestCase):
             audit.append(connector="ssh", action="connect", target="server.example", result="denied", command=["ssh", "server.example"])
             audit.append(connector="docker", action="open-workspace", target="alpine:3.20", result="launched", command=["docker", "run"])
             self.assertTrue(audit.verify())
+            self.assertEqual(32, audit.key_path.stat().st_size)
+            self.assertNotIn(audit.key_path.read_bytes().hex(), path.read_text(encoding="utf-8"))
             path.write_text(path.read_text(encoding="utf-8").replace('"denied"', '"launched"', 1), encoding="utf-8")
+            self.assertFalse(audit.verify())
+
+    def test_plain_sha256_rewrite_cannot_forge_hmac_audit(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "audit.jsonl"
+            audit = AuditLog(path)
+            audit.append(connector="ssh", action="connect", target="server.example", result="denied", command=["ssh"])
+            record = json.loads(path.read_text(encoding="utf-8"))
+            record["result"] = "launched"
+            body = {key: value for key, value in record.items() if key != "hash"}
+            canonical = json.dumps(body, sort_keys=True, ensure_ascii=False, separators=(",", ":")).encode()
+            record["hash"] = hashlib.sha256(canonical).hexdigest()
+            path.write_text(json.dumps(record) + "\n", encoding="utf-8")
             self.assertFalse(audit.verify())
 
 

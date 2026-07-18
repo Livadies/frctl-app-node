@@ -10,12 +10,22 @@ from urllib.request import HTTPCookieProcessor, Request, build_opener
 
 from frctl_node.audit import AuditLog
 from frctl_node.config import NodeConfig
-from frctl_node.server import create_server
+from frctl_node.server import NodeService, create_server
 
 
 class AllowConfirmer:
+    available = True
+
     def confirm(self, title, message):
         return True
+
+
+class UnavailableConfirmer:
+    available = False
+    failure_reason = "TclError"
+
+    def confirm(self, title, message):
+        return False
 
 
 class FakeLauncher:
@@ -103,6 +113,20 @@ class ServerTests(unittest.TestCase):
         self.assertTrue(body["loopback_only"])
         self.assertTrue(body["audit_verified"])
         self.assertIn("frame-ancestors 'none'", headers["Content-Security-Policy"])
+
+    def test_status_reports_fail_closed_confirmation(self):
+        service = NodeService(
+            self.config,
+            confirmer=UnavailableConfirmer(),
+            launcher=self.launcher,
+            workflow_executor=self.workflow_executor,
+            audit=AuditLog(Path(self.temp.name) / "unavailable-audit.jsonl"),
+            marketplace=FakeMarketplace(),
+        )
+        status = service.status()
+        self.assertFalse(status["native_confirmation"])
+        self.assertTrue(status["confirmation_fail_closed"])
+        self.assertEqual("TclError", status["confirmation_failure"])
 
     def test_marketplace_is_same_origin_and_normalized(self):
         status, body, _ = self.request("/api/marketplace")

@@ -23,4 +23,14 @@ class RawParsersTest {
     @Test fun classifiesRemoteAccessApps() {
         assertEquals(MarketCategory.REMOTE_ACCESS, MarketplaceClassifier.android("Terminal", "SSH remote server client"))
     }
+    @Test fun extractsPublishedSha256() {
+        val hash = "a".repeat(64)
+        val raw = """{"browser_download_url":"https://github.com/dev/app/releases/download/v1/app.apk.sha256","body":"$hash  app.apk"}"""
+        assertEquals(listOf("https://github.com/dev/app/releases/download/v1/app.apk.sha256"), RawParsers.sha256Links(raw))
+        assertEquals(hash, RawParsers.sha256(raw))
+    }
+    @Test fun mirrorUsesOwnerAndOriginalRepoName() {
+        val repository = mirrorCandidate("Some-Owner/My_App")
+        assertEquals("https://huggingface.co/datasets/livadies/frctl-mirror/resolve/main/Some-Owner__My_App.apk", repository)
+    }
 }

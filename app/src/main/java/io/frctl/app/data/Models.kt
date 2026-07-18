@@ -49,6 +49,9 @@ data class SearchState(
     val installedIds: Set<String> = emptySet(),
     val libraryEntries: List<AppEntry> = emptyList(),
     val searchHistory: List<String> = emptyList(),
+    val forYou: List<AppEntry> = emptyList(),
+    val interactionCount: Int = 0,
+    val personalizationEnabled: Boolean = true,
 )
 
 object MarketplaceClassifier {

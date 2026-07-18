@@ -76,6 +76,15 @@ fun HomeScreen(state: SearchState, refresh: () -> Unit, chooseCategory: (MarketC
                 item { SectionTitle(stringResource(R.string.featured)) }
                 item { LazyRow(contentPadding = PaddingValues(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) { items(state.featured.take(8), key = { it.id }) { FeaturedCard(it, open) } } }
             }
+            if (state.category == MarketCategory.ALL && state.forYou.isNotEmpty()) {
+                item {
+                    Column(Modifier.padding(top = 10.dp)) {
+                        SectionTitle(stringResource(R.string.for_you))
+                        Text(stringResource(R.string.for_you_private), style = MaterialTheme.typography.bodySmall, color = Cyan, modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp))
+                    }
+                }
+                items(state.forYou.take(8), key = { "for-you:${it.kind}:${it.id}" }) { AppRow(it, open, Modifier.animateItem()) }
+            }
             if (state.category == MarketCategory.ALL && state.installedIds.isNotEmpty()) {
                 val installed = allEntries.filter { libraryKey(it) in state.installedIds }
                 if (installed.isNotEmpty()) { item { SectionTitle(stringResource(R.string.installed_library)) }; items(installed, key = { "installed:${it.kind}:${it.id}" }) { AppRow(it, open, Modifier.animateItem()) } }

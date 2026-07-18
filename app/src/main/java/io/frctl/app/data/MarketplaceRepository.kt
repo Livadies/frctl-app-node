@@ -113,6 +113,23 @@ class MarketplaceRepository(private val context: Context) {
 
     fun searchHistory(): Flow<List<String>> = dao.observeSearchHistory().map { rows -> rows.map(SearchHistoryEntity::query) }
 
+    fun interactions(): Flow<List<InteractionEntity>> = dao.observeInteractions()
+
+    suspend fun recordInteraction(app: AppEntry, event: InteractionType) {
+        dao.insertInteraction(
+            InteractionEntity(
+                entryKey = libraryKey(app),
+                kind = app.kind.name,
+                category = app.category.name,
+                eventType = event.name,
+                timestamp = System.currentTimeMillis(),
+            )
+        )
+        dao.trimInteractions()
+    }
+
+    suspend fun clearInteractions() = dao.clearInteractions()
+
     suspend fun recordSearch(query: String) {
         val normalized = query.trim().take(80)
         if (normalized.isBlank()) return

@@ -75,7 +75,7 @@ private fun FrctlApp(vm: MainViewModel, themeMode: ThemeMode, setThemeMode: (The
                         DetailScreen(selected, key in state.favoriteIds, key in state.installedIds, { vm.toggleFavorite(selected) }, { vm.toggleInstalled(selected) }, { model -> chatModel = model; screen = "chat" }) { screen = "home" }
                     }
                     "chat" -> chatModel?.let { model -> ChatScreen(model) { screen = "detail" } }
-                    "settings" -> SettingsScreen(themeMode, setThemeMode) { screen = "home" }
+                    "settings" -> SettingsScreen(themeMode, setThemeMode, state.personalizationEnabled, state.interactionCount, vm::setPersonalization, vm::clearPersonalization) { screen = "home" }
                     else -> MainShell(target, { screen = it }, state, vm)
                 }
             }

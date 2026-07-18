@@ -116,8 +116,14 @@ interface FrctlDao {
     @Insert
     suspend fun insertInteraction(value: InteractionEntity)
 
+    @Query("SELECT * FROM interactions ORDER BY timestamp DESC, eventId DESC LIMIT 500")
+    fun observeInteractions(): Flow<List<InteractionEntity>>
+
     @Query("DELETE FROM interactions WHERE eventId NOT IN (SELECT eventId FROM interactions ORDER BY timestamp DESC LIMIT 500)")
     suspend fun trimInteractions()
+
+    @Query("DELETE FROM interactions")
+    suspend fun clearInteractions()
 }
 
 @Database(

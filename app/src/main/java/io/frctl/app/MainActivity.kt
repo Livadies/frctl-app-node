@@ -201,11 +201,41 @@ class MainActivity : ComponentActivity() {
 @Composable private fun DetailScreen(app: AppEntry, back: () -> Unit) {
     val context = LocalContext.current
     val isModel = app.kind == EntryKind.AI_MODEL
+    var showApkWarning by remember { mutableStateOf(false) }
+    fun open(url: String?) { url?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }
+    if (showApkWarning) {
+        AlertDialog(
+            onDismissRequest = { showApkWarning = false },
+            icon = { Icon(Icons.Default.Security, null) },
+            title = { Text(stringResource(R.string.apk_security_title)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(stringResource(R.string.apk_security_warning))
+                    Text(stringResource(R.string.apk_publisher, app.owner), fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.apk_source, app.source))
+                    Text(
+                        stringResource(
+                            when (app.apkVerification) {
+                                ApkVerificationStatus.TRUSTED_CHECKSUM -> R.string.apk_status_trusted_checksum
+                                ApkVerificationStatus.CHECKSUM_PUBLISHED -> R.string.apk_status_checksum
+                                ApkVerificationStatus.TRUSTED_PUBLISHER -> R.string.apk_status_trusted_publisher
+                                ApkVerificationStatus.UNVERIFIED -> R.string.apk_status_unverified
+                            }
+                        ),
+                        color = if (app.apkVerification == ApkVerificationStatus.UNVERIFIED) Color(0xFFFFC46B) else Neon
+                    )
+                    app.apkSha256?.let { Text("SHA-256: $it", style = MaterialTheme.typography.bodySmall) }
+                }
+            },
+            confirmButton = { TextButton(onClick = { showApkWarning = false; open(app.apkUrl) }) { Text(stringResource(R.string.continue_download)) } },
+            dismissButton = { TextButton(onClick = { showApkWarning = false }) { Text(stringResource(R.string.cancel)) } }
+        )
+    }
     Scaffold(topBar = { TopAppBar(title = { Text(app.name) }, navigationIcon = { IconButton(back) { Icon(Icons.Default.ArrowBack, stringResource(R.string.back)) } }) }) { pad ->
         LazyColumn(Modifier.padding(pad), contentPadding = PaddingValues(18.dp)) {
             item { Row(verticalAlignment = Alignment.CenterVertically) { AppIcon(app, 88); Spacer(Modifier.width(16.dp)); Column { Text(app.name, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(app.owner, color = Cyan); Text(if (isModel) "↓ ${compact(app.downloads)} · ♥ ${compact(app.stars)}" else "★ ${compact(app.stars)}") } } }
             item { Text(app.description, modifier = Modifier.padding(vertical = 18.dp), maxLines = 5) }
-            item { Button(enabled = isModel || app.apkUrl != null, onClick = { val url = if (isModel) app.repoUrl else app.apkUrl; url?.let { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(it))) } }, modifier = Modifier.fillMaxWidth().height(54.dp).testTag("install_button"), shape = RoundedCornerShape(16.dp)) { Icon(if (isModel) Icons.Default.Psychology else Icons.Default.Download, null); Spacer(Modifier.width(8.dp)); Text(if (isModel) stringResource(R.string.open_model) else if (app.apkUrl == null) stringResource(R.string.no_apk) else stringResource(R.string.install)) } }
+            item { Button(enabled = isModel || app.apkUrl != null, onClick = { if (isModel) open(app.repoUrl) else showApkWarning = true }, modifier = Modifier.fillMaxWidth().height(54.dp).testTag("install_button"), shape = RoundedCornerShape(16.dp)) { Icon(if (isModel) Icons.Default.Psychology else Icons.Default.Download, null); Spacer(Modifier.width(8.dp)); Text(if (isModel) stringResource(R.string.open_model) else if (app.apkUrl == null) stringResource(R.string.no_apk) else stringResource(R.string.install)) } }
             if (!isModel) item { OutlinedButton(onClick = { context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(app.repoUrl))) }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) { Text(stringResource(R.string.open_github)) } }
             item { SectionTitle(stringResource(R.string.full_description)) }
             item { LightweightMarkdown(app.readme.ifBlank { app.description }) }

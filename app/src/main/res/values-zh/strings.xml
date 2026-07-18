@@ -9,6 +9,7 @@
     <string name="category_all">全部</string><string name="category_android">Android</string><string name="category_ai">AI 与模型</string><string name="category_security">安全</string><string name="category_remote">远程访问</string><string name="category_tools">工具</string><string name="category_media">媒体</string><string name="empty_category">此类别中尚未找到内容。</string>
     <string name="open_model">打开模型</string>
     <string name="install">下载 APK</string><string name="no_apk">最新版本没有 APK</string><string name="open_github">打开仓库</string><string name="full_description">应用介绍</string>
+    <string name="apk_security_title">下载前检查</string><string name="apk_security_warning">APK 将在外部浏览器中打开。安装前请核对发布者、签名和校验和。</string><string name="apk_publisher">发布者：%1$s</string><string name="apk_source">来源：%1$s</string><string name="apk_status_trusted_checksum">状态：可信发布者提供 SHA-256</string><string name="apk_status_checksum">状态：已发布 SHA-256，但发布者不在允许列表</string><string name="apk_status_trusted_publisher">状态：发布者可信，但未找到 SHA-256</string><string name="apk_status_unverified">状态：APK 未验证</string><string name="continue_download">继续</string><string name="cancel">取消</string>
     <string name="account">账户与访问</string><string name="github_account">连接 GitHub</string><string name="github_benefit">可选。API 限额从每小时 60 次提升到 5000 次。公共目录无需账户。</string>
     <string name="sign_in_github">使用 GitHub 登录</string><string name="enter_code">在 GitHub 输入此代码</string><string name="connected">GitHub 已连接</string>
     <string name="oauth_setup_needed">浏览器已打开。创建只读令牌并粘贴到下方。Device Flow 需要 FRCTL OAuth Client ID。</string>

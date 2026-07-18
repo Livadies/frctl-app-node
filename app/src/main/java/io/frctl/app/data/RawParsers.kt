@@ -2,11 +2,19 @@ package io.frctl.app.data
 
 object RawParsers {
     private val apkRegex = Regex("https?://[^\\s\\\"'<>]+?\\.apk(?=[\\\"'<>\\s]|$)", RegexOption.IGNORE_CASE)
+    private val sha256AssetRegex = Regex("https?://[^\\s\\\"'<>]+?\\.sha256(?=[\\\"'<>\\s]|$)", RegexOption.IGNORE_CASE)
     private val fullNameRegex = Regex("\\\"full_name\\\"\\s*:\\s*\\\"([^\\\"]+)\\\"")
 
     fun apkLinks(raw: String): List<String> = apkRegex.findAll(raw.replace("\\/", "/"))
         .map { it.value.replace("\\u0026", "&") }
         .distinct().toList()
+
+    fun sha256Links(raw: String): List<String> = sha256AssetRegex.findAll(raw.replace("\\/", "/"))
+        .map { it.value.replace("\\u0026", "&") }
+        .distinct().toList()
+
+    fun sha256(raw: String): String? = Regex("(?i)(?<![a-f0-9])[a-f0-9]{64}(?![a-f0-9])")
+        .find(raw)?.value?.lowercase()
 
     fun githubCandidates(raw: String): List<AppEntry> {
         val matches = fullNameRegex.findAll(raw).toList()

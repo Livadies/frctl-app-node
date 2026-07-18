@@ -4,6 +4,8 @@ enum class EntryKind { ANDROID_APP, AI_MODEL }
 
 enum class MarketCategory { ALL, ANDROID, AI, SECURITY, REMOTE_ACCESS, TOOLS, MEDIA }
 
+enum class ApkVerificationStatus { TRUSTED_CHECKSUM, CHECKSUM_PUBLISHED, TRUSTED_PUBLISHER, UNVERIFIED }
+
 data class AppEntry(
     val id: String,
     val name: String,
@@ -20,7 +22,10 @@ data class AppEntry(
     val kind: EntryKind = EntryKind.ANDROID_APP,
     val category: MarketCategory = MarketCategory.TOOLS,
     val downloads: Int = 0,
-    val pipelineTag: String = ""
+    val pipelineTag: String = "",
+    val apkSha256: String? = null,
+    val apkVerification: ApkVerificationStatus = ApkVerificationStatus.UNVERIFIED,
+    val trustedPublisher: Boolean = false
 )
 
 enum class TokenMode { BEARER, TOKEN, RAW }

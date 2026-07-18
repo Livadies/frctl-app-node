@@ -48,6 +48,7 @@ class NodeService:
         self.session = secrets.token_urlsafe(32)
 
     def status(self) -> dict[str, Any]:
+        confirmation_available = bool(getattr(self.confirmer, "available", True))
         identity_files = []
         for item in self.config.allowed_identity_files:
             path = Path(os.path.expandvars(item)).expanduser()
@@ -58,7 +59,9 @@ class NodeService:
             "version": __version__,
             "listen": f"http://{self.config.host}:{self.config.port}",
             "loopback_only": True,
-            "native_confirmation": True,
+            "native_confirmation": confirmation_available,
+            "confirmation_fail_closed": not confirmation_available,
+            "confirmation_failure": getattr(self.confirmer, "failure_reason", None),
             "arbitrary_commands": False,
             "audit_verified": self.audit.verify(),
             "connectors": self.registry.capabilities(),

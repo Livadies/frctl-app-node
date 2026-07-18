@@ -19,6 +19,14 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio1\jbr"
 
 ## История версий
 
+### Security phase 0 — 2026-07-18
+
+- GitHub token encrypted with a non-exportable Android Keystore AES/GCM key, with one-time plaintext migration;
+- APK download confirmation shows source, publisher, trusted-publisher status and published SHA-256 when available;
+- Hugging Face mirrors use collision-resistant `owner__repository.apk` names;
+- FRCTL Node audit chain upgraded to HMAC-SHA-256 with a protected local key and fail-closed verification;
+- native-confirmation availability is exposed in `/api/status`, and the threat model documents local-malware limits.
+
 ### v1.2.0 (versionCode 4) — 2026-07-17
 
 - категории Android, ИИ, безопасность, удалённый доступ, инструменты и медиа;

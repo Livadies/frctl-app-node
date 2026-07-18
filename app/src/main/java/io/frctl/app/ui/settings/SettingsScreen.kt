@@ -38,7 +38,15 @@ private data class LanguageOption(val tag: String, val label: Int)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(themeMode: ThemeMode, setThemeMode: (ThemeMode) -> Unit, back: () -> Unit) {
+fun SettingsScreen(
+    themeMode: ThemeMode,
+    setThemeMode: (ThemeMode) -> Unit,
+    personalizationEnabled: Boolean,
+    interactionCount: Int,
+    setPersonalization: (Boolean) -> Unit,
+    clearPersonalization: () -> Unit,
+    back: () -> Unit,
+) {
     val context = LocalContext.current
     val store = remember { TokenStore(context) }
     val auth = remember { GitHubDeviceAuth() }
@@ -71,6 +79,17 @@ fun SettingsScreen(themeMode: ThemeMode, setThemeMode: (ThemeMode) -> Unit, back
                 FilterChip(selected = themeMode == ThemeMode.FRCTL, onClick = { setThemeMode(ThemeMode.FRCTL) }, label = { Text(stringResource(R.string.theme_frctl)) })
             } }
             item { Text(stringResource(R.string.language_title), fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 16.dp)); languages.forEach { option -> Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth().clickable { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(option.tag)) }) { RadioButton(selected = currentLanguage == option.tag || (currentLanguage.isBlank() && option.tag.isBlank()), onClick = { AppCompatDelegate.setApplicationLocales(LocaleListCompat.forLanguageTags(option.tag)) }); Text(stringResource(option.label)) } } }
+            item {
+                HorizontalDivider(Modifier.padding(vertical = 18.dp))
+                Text(stringResource(R.string.personalization), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.personalization_private), color = Color(0xFFB7C0CC), modifier = Modifier.padding(vertical = 6.dp))
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.personalization_enabled), Modifier.weight(1f))
+                    Switch(personalizationEnabled, setPersonalization)
+                }
+                Text(stringResource(R.string.interactions_saved, interactionCount), style = MaterialTheme.typography.bodySmall)
+                OutlinedButton(clearPersonalization, Modifier.fillMaxWidth().padding(top = 8.dp), enabled = interactionCount > 0) { Text(stringResource(R.string.clear_interests)) }
+            }
             item { HorizontalDivider(Modifier.padding(vertical = 18.dp)); Text(stringResource(R.string.local_models), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold); Text(stringResource(R.string.models_storage, formatBytes(localModels.sumOf { it.sizeBytes })), color = Color(0xFFB7C0CC), modifier = Modifier.padding(top = 6.dp)) }
             item { Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.unmetered_only), Modifier.weight(1f)); Switch(unmeteredOnly, { value -> scope.launch { modelPreferences.setUnmeteredOnly(value) } }) } }
             if (localModels.isEmpty()) item { Text(stringResource(R.string.no_local_models), color = Color(0xFFB7C0CC), modifier = Modifier.padding(vertical = 8.dp)) }

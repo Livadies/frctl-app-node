@@ -4,9 +4,14 @@ import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import io.frctl.app.data.AppEntry
+import io.frctl.app.data.InteractionEntity
+import io.frctl.app.data.InteractionType
 import io.frctl.app.data.MarketplaceRepository
 import io.frctl.app.data.MarketCategory
+import io.frctl.app.data.PersonalizationPreferences
 import io.frctl.app.data.SearchState
+import io.frctl.app.data.categoryWeights
+import io.frctl.app.data.rankEntries
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
@@ -16,9 +21,11 @@ import kotlinx.coroutines.launch
 
 class MainViewModel(app: Application) : AndroidViewModel(app) {
     private val repository = MarketplaceRepository(app)
+    private val personalization = PersonalizationPreferences(app)
     private val mutable = MutableStateFlow(SearchState())
     val state: StateFlow<SearchState> = mutable
     private var searchJob: Job? = null
+    private var interactions: List<InteractionEntity> = emptyList()
 
     init {
         loadHome()
@@ -29,6 +36,18 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
         viewModelScope.launch {
             repository.searchHistory().collect { history -> mutable.update { it.copy(searchHistory = history) } }
+        }
+        viewModelScope.launch {
+            repository.interactions().collect { values ->
+                interactions = values
+                rebuildForYou()
+            }
+        }
+        viewModelScope.launch {
+            personalization.enabled.collect { enabled ->
+                mutable.update { it.copy(personalizationEnabled = enabled) }
+                rebuildForYou()
+            }
         }
     }
 
@@ -70,15 +89,33 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
             )
         }.onSuccess { result ->
             mutable.update { it.copy(loading = false, featured = result.featured, trending = result.trending, models = result.models, cached = result.cached, offline = result.offline, cachedAt = result.cachedAt, lastUpdatedAt = System.currentTimeMillis()) }
+            rebuildForYou()
         }.onFailure { e -> mutable.update { it.copy(loading = false, error = e.message ?: "Catalog unavailable") } }
     }
     fun select(app: AppEntry) = viewModelScope.launch {
         mutable.update { it.copy(selected = app) }
+        repository.recordInteraction(app, InteractionType.OPEN)
         runCatching { repository.details(app) }.onSuccess { full -> mutable.update { it.copy(selected = full) } }
     }
     fun category(value: MarketCategory) = mutable.update { it.copy(category = value) }
-    fun toggleFavorite(app: AppEntry) = viewModelScope.launch { repository.toggleFavorite(app) }
-    fun toggleInstalled(app: AppEntry) = viewModelScope.launch { repository.toggleInstalled(app) }
+    fun toggleFavorite(app: AppEntry) = viewModelScope.launch { repository.toggleFavorite(app); repository.recordInteraction(app, InteractionType.FAVORITE) }
+    fun toggleInstalled(app: AppEntry) = viewModelScope.launch { repository.toggleInstalled(app); repository.recordInteraction(app, InteractionType.INSTALL) }
+
+    fun setPersonalization(enabled: Boolean) = viewModelScope.launch { personalization.setEnabled(enabled) }
+
+    fun clearPersonalization() = viewModelScope.launch { repository.clearInteractions() }
+
+    private fun rebuildForYou() {
+        mutable.update { state ->
+            val candidates = (state.featured + state.trending + state.models + state.libraryEntries)
+                .distinctBy { "${it.kind}:${it.id}" }
+            val visible = state.personalizationEnabled && interactions.size >= 10
+            state.copy(
+                interactionCount = interactions.size,
+                forYou = if (visible) rankEntries(candidates, categoryWeights(interactions, System.currentTimeMillis())).take(10) else emptyList(),
+            )
+        }
+    }
 
     private data class HomeResult(
         val featured: List<AppEntry>,

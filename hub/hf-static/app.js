@@ -3,11 +3,15 @@ const sequenceKey = "frctl.local.sequence.v1";
 const telemetryKey = "frctl.local.telemetry.v1";
 const marketCacheKey = "frctl.marketplace.cache.v1";
 const marketTtlMs = 5 * 60 * 1000;
-const categories = [
-  ["all", "Все"], ["android", "Android"], ["ai", "ИИ и модели"],
-  ["security", "Безопасность"], ["remote-access", "Удалённый доступ"],
-  ["tools", "Инструменты"], ["media", "Медиа"]
-];
+const language = localStorage.getItem("frctl.language") || "en";
+const categoryLabels = {
+  ru:["Все","Android","ИИ и модели","Безопасность","Удалённый доступ","Инструменты","Медиа"],
+  en:["All","Android","AI & models","Security","Remote access","Tools","Media"],
+  zh:["全部","Android","AI 与模型","安全","远程访问","工具","媒体"],
+  de:["Alle","Android","KI & Modelle","Sicherheit","Fernzugriff","Werkzeuge","Medien"],
+  es:["Todo","Android","IA y modelos","Seguridad","Acceso remoto","Herramientas","Multimedia"]
+}[language] || ["All","Android","AI & models","Security","Remote access","Tools","Media"];
+const categories = ["all","android","ai","security","remote-access","tools","media"].map((id,index)=>[id,categoryLabels[index]]);
 const connectors = [
   {id:"ssh",name:"SSH / PuTTY",risk:"medium",description:"Plan an SSH session and hand it to an installed OSS client."},
   {id:"rustdesk",name:"RustDesk",risk:"high",description:"Plan a consent-based remote desktop session without embedding credentials."},

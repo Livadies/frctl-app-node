@@ -55,7 +55,7 @@ def _category(name: str, description: str, topics: Any = None) -> str:
 def _default_fetch(url: str) -> str:
     request = urllib.request.Request(
         url,
-        headers={"Accept": "application/vnd.github+json, application/json", "User-Agent": "FRCTL-Node/0.5"},
+        headers={"Accept": "application/vnd.github+json, application/json", "User-Agent": "FRCTL-Node/0.6"},
     )
     with urllib.request.urlopen(request, timeout=15) as response:
         payload = response.read(MAX_RESPONSE + 1)

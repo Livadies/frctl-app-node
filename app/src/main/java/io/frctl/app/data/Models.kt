@@ -17,6 +17,7 @@ data class AppEntry(
     val readme: String = "",
     val source: String = "GitHub",
     val iconUrl: String? = null,
+    val fallbackIconUrl: String? = null,
     val stars: Int = 0,
     val updatedAt: String = "",
     val kind: EntryKind = EntryKind.ANDROID_APP,

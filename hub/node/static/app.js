@@ -1,4 +1,5 @@
 const $ = (selector) => document.querySelector(selector);
+const tr = key => window.FRCTL_I18N?.t(key) || key;
 let statusData = null;
 let plannedPayload = null;
 let plannedWorkflow = null;
@@ -23,21 +24,24 @@ async function api(path, options = {}) {
 }
 
 function connectorDescription(id) {
-  return {
-    ssh: "Интерактивная SSH-сессия без пароля в API",
-    rustdesk: "Удалённый рабочий стол с авторизацией в RustDesk",
-    docker: "Одноразовая песочница без сети и host mounts",
-    browser: "Разрешённый web-workspace в системном браузере"
-  }[id];
+  const descriptions = {
+    ru:{ssh:"Интерактивная SSH-сессия без пароля в API",rustdesk:"Удалённый рабочий стол с авторизацией в RustDesk",docker:"Одноразовая песочница без сети и host mounts",browser:"Разрешённый web-workspace в системном браузере"},
+    en:{ssh:"Interactive SSH session without a password in the API",rustdesk:"Remote desktop with authentication inside RustDesk",docker:"Disposable sandbox without network or host mounts",browser:"Allowed web workspace in the system browser"},
+    zh:{ssh:"API 中不传递密码的交互式 SSH 会话",rustdesk:"在 RustDesk 内认证的远程桌面",docker:"无网络且不挂载主机目录的一次性沙箱",browser:"系统浏览器中的允许 Web 工作区"},
+    de:{ssh:"Interaktive SSH-Sitzung ohne Passwort in der API",rustdesk:"Remote-Desktop mit Anmeldung in RustDesk",docker:"Einweg-Sandbox ohne Netzwerk oder Host-Mounts",browser:"Zugelassener Web-Arbeitsbereich im Systembrowser"},
+    es:{ssh:"Sesión SSH interactiva sin contraseña en la API",rustdesk:"Escritorio remoto con autenticación en RustDesk",docker:"Sandbox desechable sin red ni montajes del host",browser:"Espacio web permitido en el navegador del sistema"}
+  };
+  return (descriptions[window.FRCTL_I18N?.language] || descriptions.en)[id];
 }
 
 function connectorState(item) {
-  if (item.installed) return "ГОТОВ";
-  if (item.id === "docker" && item.providers?.docker_cli) return "DOCKER НЕ ЗАПУЩЕН";
-  return "КЛИЕНТ НЕ НАЙДЕН";
+  if (item.installed) return tr("ready");
+  if (item.id === "docker" && item.providers?.docker_cli) return tr("dockerStopped");
+  return tr("clientMissing");
 }
 
-const marketCategoryNames = {all:"Все",android:"Android",ai:"ИИ и модели",security:"Безопасность","remote-access":"Удалённый доступ",tools:"Инструменты",media:"Медиа"};
+const marketCategoryKeys = {all:"catAll",android:"catAndroid",ai:"catAi",security:"catSecurity","remote-access":"catRemote",tools:"catTools",media:"catMedia"};
+const marketCategoryName = category => tr(marketCategoryKeys[category] || category);
 
 function compactNumber(value) {
   const number = Number(value || 0);
@@ -54,24 +58,24 @@ function renderMarketplace() {
     const text = `${item.name} ${item.owner} ${item.description} ${item.source}`.toLowerCase();
     return categoryMatch && (!query || text.includes(query));
   });
-  $("#market-categories").innerHTML = marketplaceData.categories.map(category => `<button class="market-chip ${marketplaceFilter === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(marketCategoryNames[category] || category)}</button>`).join("");
-  $("#market-summary").textContent = `${entries.length} позиций · ${marketplaceData.sources.join(" + ")} · ${marketplaceData.cached ? "кэш" : "live"} · ${new Date(marketplaceData.generated_at).toLocaleString("ru-RU")}`;
-  $("#market-state").textContent = marketplaceData.degraded ? "OFFLINE CACHE" : "LIVE · 5 МИН";
+  $("#market-categories").innerHTML = marketplaceData.categories.map(category => `<button class="market-chip ${marketplaceFilter === category ? "active" : ""}" data-category="${escapeHtml(category)}">${escapeHtml(marketCategoryName(category))}</button>`).join("");
+  $("#market-summary").textContent = `${entries.length} ${tr("positions")} · ${marketplaceData.sources.join(" + ")} · ${marketplaceData.cached ? tr("cache") : "live"} · ${new Date(marketplaceData.generated_at).toLocaleString(window.FRCTL_I18N?.locale() || "en-US")}`;
+  $("#market-state").textContent = marketplaceData.degraded ? "OFFLINE CACHE" : tr("live5");
   $("#market-state").className = `pill ${marketplaceData.degraded ? "wait" : "ok"}`;
   $("#market-grid").innerHTML = entries.length ? entries.map(item => `<a class="market-card ${item.kind === "ai-model" ? "model" : ""}" href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer">
     <span class="market-icon">${item.kind === "ai-model" ? "AI" : escapeHtml(item.name.slice(0,1).toUpperCase())}</span>
-    <span class="market-kind">${item.kind === "ai-model" ? "ИИ-МОДЕЛЬ" : "ANDROID OSS"} · ${escapeHtml(marketCategoryNames[item.category] || item.category)}</span>
+    <span class="market-kind">${item.kind === "ai-model" ? tr("aiModel") : "ANDROID OSS"} · ${escapeHtml(marketCategoryName(item.category))}</span>
     <h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.description)}</p>
     <span class="market-meta">${escapeHtml(item.owner)} · ${item.kind === "ai-model" ? `↓ ${compactNumber(item.downloads)} · ♥ ${compactNumber(item.score)}` : `★ ${compactNumber(item.score)}`}</span>
-  </a>`).join("") : `<div class="market-empty">По этому фильтру ничего не найдено.</div>`;
+  </a>`).join("") : `<div class="market-empty">${escapeHtml(tr("marketEmpty"))}</div>`;
   document.querySelectorAll(".market-chip").forEach(button => button.addEventListener("click", () => { marketplaceFilter = button.dataset.category; renderMarketplace(); }));
 }
 
 async function loadMarketplace() {
-  $("#market-state").textContent = "ОБНОВЛЕНИЕ";
+  $("#market-state").textContent = tr("updating");
   $("#market-state").className = "pill wait";
   try { marketplaceData = await api("/api/marketplace"); renderMarketplace(); }
-  catch (error) { $("#market-state").textContent = "НЕДОСТУПНО"; $("#market-summary").textContent = error.message; }
+  catch (error) { $("#market-state").textContent = tr("unavailable"); $("#market-summary").textContent = error.message; }
 }
 
 function renderStatus(data) {
@@ -82,10 +86,11 @@ function renderStatus(data) {
   $("#audit-state").textContent = data.audit_verified ? "VERIFIED" : "BROKEN";
   $("#allowlist").innerHTML = data.allowed_targets.map(item => `<span class="tag">${escapeHtml(item)}</span>`).join("");
   $("#image").innerHTML = data.allowed_docker_images.map(item => `<option value="${escapeHtml(item)}">${escapeHtml(item)}</option>`).join("");
-  $("#identity-file").innerHTML = `<option value="">Без ключа</option>` + (data.identity_files || []).map(item => `<option value="${escapeHtml(item.path)}">${escapeHtml(item.name)}</option>`).join("");
-  $("#workflow-identity").innerHTML = `<option value="">Выберите ключ</option>` + (data.identity_files || []).map(item => `<option value="${escapeHtml(item.path)}">${escapeHtml(item.name)}</option>`).join("");
-  $("#workflow-profile").innerHTML = (data.workflows || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(item.name)}${item.mutating ? " · изменяет /tmp" : " · read-only"}</option>`).join("");
-  $("#plink-state").textContent = data.plink_ready ? "PLINK ГОТОВ" : "PLINK НЕ НАЙДЕН";
+  $("#identity-file").innerHTML = `<option value="">${escapeHtml(tr("noKey"))}</option>` + (data.identity_files || []).map(item => `<option value="${escapeHtml(item.path)}">${escapeHtml(item.name)}</option>`).join("");
+  $("#workflow-identity").innerHTML = `<option value="">${escapeHtml(tr("chooseKey"))}</option>` + (data.identity_files || []).map(item => `<option value="${escapeHtml(item.path)}">${escapeHtml(item.name)}</option>`).join("");
+  const workflowNames = {diagnostics:tr("workflowDiagnostics"),"proof-file":tr("workflowProof")};
+  $("#workflow-profile").innerHTML = (data.workflows || []).map(item => `<option value="${escapeHtml(item.id)}">${escapeHtml(workflowNames[item.id] || item.name)}${item.mutating ? ` · ${escapeHtml(tr("mutatesTmp"))}` : " · read-only"}</option>`).join("");
+  $("#plink-state").textContent = data.plink_ready ? tr("plinkReady") : tr("plinkMissing");
   $("#plink-state").className = `pill ${data.plink_ready ? "ok" : "wait"}`;
   if ((data.pinned_targets || []).length === 1) {
     $("#workflow-target").value = data.pinned_targets[0];
@@ -116,7 +121,7 @@ function connectorChanged() {
   if (defaults[value]) $("#target").value = defaults[value];
   plannedPayload = null;
   $("#launch").disabled = true;
-  $("#plan").textContent = "План ещё не сформирован.";
+  $("#plan").textContent = tr("planEmpty");
   sshClientChanged();
 }
 
@@ -170,13 +175,13 @@ async function loadAudit() {
   const data = await api("/api/audit");
   $("#audit-state").textContent = data.verified ? "VERIFIED" : "BROKEN";
   $("#audit").innerHTML = data.records.length ? data.records.slice().reverse().map(item => `
-    <div class="audit-row"><span>${escapeHtml(item.at)}</span><b>${escapeHtml(item.connector)}</b><span>${escapeHtml(item.target_hash.slice(0,16))}…</span><span class="${["launched","executed"].includes(item.result) ? "good" : "bad"}">${escapeHtml(item.result)}</span></div>`).join("") : "Записей пока нет.";
+    <div class="audit-row"><span>${escapeHtml(item.at)}</span><b>${escapeHtml(item.connector)}</b><span>${escapeHtml(item.target_hash.slice(0,16))}…</span><span class="${["launched","executed"].includes(item.result) ? "good" : "bad"}">${escapeHtml(item.result)}</span></div>`).join("") : tr("auditEmpty");
 }
 
 function renderAudit(data) {
   $("#audit-state").textContent = data.verified ? "VERIFIED" : "BROKEN";
   $("#audit").innerHTML = data.records.length ? data.records.slice().reverse().map(item => `
-    <div class="audit-row"><span>${escapeHtml(item.at)}</span><b>${escapeHtml(item.connector)}</b><span>${escapeHtml(item.target_hash.slice(0,16))}…</span><span class="${["launched","executed"].includes(item.result) ? "good" : "bad"}">${escapeHtml(item.result)}</span></div>`).join("") : "Записей пока нет.";
+    <div class="audit-row"><span>${escapeHtml(item.at)}</span><b>${escapeHtml(item.connector)}</b><span>${escapeHtml(item.target_hash.slice(0,16))}…</span><span class="${["launched","executed"].includes(item.result) ? "good" : "bad"}">${escapeHtml(item.result)}</span></div>`).join("") : tr("auditEmpty");
 }
 
 function connectAuditStream() {
@@ -186,7 +191,7 @@ function connectAuditStream() {
     renderAudit(JSON.parse(event.data));
     $("#audit-live").textContent = "LIVE";
   });
-  auditStream.onerror = () => { $("#audit-live").textContent = "ПЕРЕПОДКЛЮЧЕНИЕ"; };
+  auditStream.onerror = () => { $("#audit-live").textContent = tr("reconnecting"); };
 }
 
 function workflowPayload() {
@@ -272,5 +277,10 @@ $("#audit-verify").addEventListener("click", async () => {
 });
 $("#market-refresh").addEventListener("click", loadMarketplace);
 $("#market-search").addEventListener("input", renderMarketplace);
+window.addEventListener("frctl-language-change", () => {
+  if (statusData) renderStatus(statusData);
+  if (marketplaceData) renderMarketplace();
+  loadAudit().catch(() => {});
+});
 setInterval(loadMarketplace, 5 * 60 * 1000);
 load();

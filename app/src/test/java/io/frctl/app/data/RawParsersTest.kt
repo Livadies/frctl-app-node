@@ -14,7 +14,8 @@ class RawParsersTest {
         val app = RawParsers.githubCandidates(raw).single()
         assertEquals("dev/app", app.id)
         assertEquals("Demo with \"quotes\"", app.description)
-        assertEquals("https://img/avatar.png", app.iconUrl)
+        assertEquals("https://raw.githubusercontent.com/dev/app/HEAD/fastlane/metadata/android/en-US/images/icon.png", app.iconUrl)
+        assertEquals("https://img/avatar.png", app.fallbackIconUrl)
         assertEquals(0, app.stars)
     }
     @Test fun parsesHuggingFaceModels() {

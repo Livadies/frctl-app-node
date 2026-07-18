@@ -9,6 +9,8 @@ import androidx.room.Query
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.Upsert
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import kotlinx.coroutines.flow.Flow
 
 @Entity(tableName = "catalog_cache")
@@ -29,6 +31,7 @@ data class LibraryEntity(
     val repoUrl: String,
     val source: String,
     val iconUrl: String?,
+    val fallbackIconUrl: String?,
     val stars: Int,
     val downloads: Int,
     val pipelineTag: String,
@@ -80,7 +83,7 @@ interface FrctlDao {
 
 @Database(
     entities = [CatalogCacheEntity::class, LibraryEntity::class, SearchHistoryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 abstract class FrctlDatabase : RoomDatabase() {
@@ -94,7 +97,13 @@ abstract class FrctlDatabase : RoomDatabase() {
                 context.applicationContext,
                 FrctlDatabase::class.java,
                 "frctl-catalog.db",
-            ).build().also { instance = it }
+            ).addMigrations(MIGRATION_1_2).build().also { instance = it }
+        }
+
+        private val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE library ADD COLUMN fallbackIconUrl TEXT")
+            }
         }
     }
 }

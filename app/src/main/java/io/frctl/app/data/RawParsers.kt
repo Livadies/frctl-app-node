@@ -33,7 +33,8 @@ object RawParsers {
                 owner = owner,
                 description = description,
                 repoUrl = "https://github.com/$fullName",
-                iconUrl = item.objectOrNull("owner")?.string("avatar_url"),
+                iconUrl = "https://raw.githubusercontent.com/$fullName/HEAD/fastlane/metadata/android/en-US/images/icon.png",
+                fallbackIconUrl = item.objectOrNull("owner")?.string("avatar_url"),
                 stars = item.int("stargazers_count") ?: 0,
                 updatedAt = item.string("updated_at").orEmpty(),
                 category = MarketplaceClassifier.android(name, description)

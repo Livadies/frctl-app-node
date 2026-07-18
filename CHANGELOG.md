@@ -19,6 +19,16 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio1\jbr"
 
 ## История версий
 
+### v1.4.0 / FRCTL Node 0.6 — UI and i18n phase 3 — 2026-07-18
+
+- the Android monolith was split into home, search, detail, settings, reusable components and theme modules;
+- Material You dynamic color and the FRCTL neon theme can be selected in settings;
+- Android, the public Hugging Face interface and the local Node panel support RU/EN/ZH/DE/ES selection;
+- Android adds skeleton loading, pull-to-refresh, animated list placement, predictive back, shared app-icon transitions and haptic feedback;
+- repository icons try the F-Droid fastlane convention first and fall back to the owner avatar;
+- Room schema 1→2 migration preserves existing favorites and installed entries;
+- Android version raised to 1.4.0 (6), Node version raised to 0.6.0.
+
 ### v1.3.0 / FRCTL Node 0.5 — Feature phase 2 — 2026-07-18
 
 - Android catalog cache moved from temporary files to a persistent Room database with TTL and a dated offline banner;

@@ -5,97 +5,97 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#06100e">
   <title>FRCTL Node</title>
-  <link rel="stylesheet" href="/styles.css?v=0.5.0">
-  <link rel="stylesheet" href="/workflow.css?v=0.5.0">
-  <link rel="stylesheet" href="/marketplace.css?v=0.5.0">
-  <link rel="stylesheet" href="/audit.css?v=0.5.0">
+  <link rel="stylesheet" href="/styles.css?v=0.6.0">
+  <link rel="stylesheet" href="/workflow.css?v=0.6.0">
+  <link rel="stylesheet" href="/marketplace.css?v=0.6.0">
+  <link rel="stylesheet" href="/audit.css?v=0.6.0">
 </head>
 <body>
   <header>
     <div class="brand"><span>F</span><div><b>FRCTL NODE</b><small>LOCAL EXECUTION BOUNDARY</small></div></div>
-    <div id="node-state" class="pill wait">ПРОВЕРКА УЗЛА</div>
+    <div class="market-actions"><select id="language-select" aria-label="Language"><option value="ru">RU</option><option value="en">EN</option><option value="zh">中文</option><option value="de">DE</option><option value="es">ES</option></select><div id="node-state" class="pill wait">ПРОВЕРКА УЗЛА</div></div>
   </header>
   <main>
     <section class="hero">
       <p class="eyebrow">LOOPBACK ONLY · CONSENT REQUIRED</p>
-      <h1>Подключение начинается<br><em>с вашего разрешения.</em></h1>
-      <p>Локальный узел запускает только проверенные клиенты. Пароли и произвольные команды через API не принимаются.</p>
-      <div class="stats"><div><b id="version">—</b><small>версия</small></div><div><b>127.0.0.1</b><small>единственный адрес</small></div><div><b id="audit-state">—</b><small>audit chain</small></div></div>
+      <h1 data-i18n-html="hero">Подключение начинается<br><em>с вашего разрешения.</em></h1>
+      <p data-i18n="intro">Локальный узел запускает только проверенные клиенты. Пароли и произвольные команды через API не принимаются.</p>
+      <div class="stats"><div><b id="version">—</b><small data-i18n="version">версия</small></div><div><b>127.0.0.1</b><small data-i18n="loopback">единственный адрес</small></div><div><b id="audit-state">—</b><small>audit chain</small></div></div>
     </section>
 
     <section class="panel marketplace-panel">
       <div class="title-row">
-        <div><p class="eyebrow">LIVE MARKETPLACE</p><h2>Приложения и ИИ‑модели</h2></div>
-        <div class="market-actions"><span id="market-state" class="pill wait">ЗАГРУЗКА</span><button id="market-refresh" class="ghost">Обновить</button></div>
+        <div><p class="eyebrow">LIVE MARKETPLACE</p><h2 data-i18n="market">Приложения и ИИ‑модели</h2></div>
+        <div class="market-actions"><span id="market-state" class="pill wait" data-i18n="loading">ЗАГРУЗКА</span><button id="market-refresh" class="ghost" data-i18n="refresh">Обновить</button></div>
       </div>
-      <p class="muted">Единая витрина GitHub и Hugging Face. Данные обновляются каждые пять минут; выполнение по‑прежнему остаётся внутри локального Node.</p>
-      <div class="market-toolbar"><input id="market-search" type="search" placeholder="Найти приложение, модель или автора" maxlength="80"><div id="market-categories" class="market-categories"></div></div>
-      <div id="market-summary" class="market-summary">Подключаю безопасные публичные источники…</div>
+      <p class="muted" data-i18n="marketDescription">Единая витрина GitHub и Hugging Face. Данные обновляются каждые пять минут; выполнение по‑прежнему остаётся внутри локального Node.</p>
+      <div class="market-toolbar"><input id="market-search" type="search" placeholder="Найти приложение, модель или автора" data-i18n-placeholder="marketSearch" maxlength="80"><div id="market-categories" class="market-categories"></div></div>
+      <div id="market-summary" class="market-summary" data-i18n="marketConnecting">Подключаю безопасные публичные источники…</div>
       <div id="market-grid" class="market-grid"></div>
     </section>
 
     <section class="panel">
-      <div class="title-row"><div><p class="eyebrow">CONNECTORS</p><h2>Локальные клиенты</h2></div><button id="refresh" class="ghost">Обновить статус</button></div>
+      <div class="title-row"><div><p class="eyebrow">CONNECTORS</p><h2 data-i18n="clients">Локальные клиенты</h2></div><button id="refresh" class="ghost" data-i18n="refreshStatus">Обновить статус</button></div>
       <div id="catalog" class="catalog"></div>
     </section>
 
     <section class="layout">
       <form id="launcher" class="panel">
-        <p class="eyebrow">SAFE LAUNCH</p><h2>Новое подключение</h2>
-        <label>Коннектор<select name="connector" id="connector"></select></label>
-        <label id="target-row">Цель<input name="target" id="target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
+        <p class="eyebrow">SAFE LAUNCH</p><h2 data-i18n="connection">Новое подключение</h2>
+        <label><span data-i18n="connector">Коннектор</span><select name="connector" id="connector"></select></label>
+        <label id="target-row"><span data-i18n="target">Цель</span><input name="target" id="target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
         <div id="ssh-fields">
-          <label>SSH-клиент<select name="client" id="ssh-client"><option value="openssh">OpenSSH</option><option value="putty">PuTTY</option></select></label>
-          <label>Пользователь без пароля<input name="user" maxlength="32" placeholder="ubuntu" autocomplete="off"></label>
-          <label>Разрешённый PPK-ключ<select name="identity_file" id="identity-file"><option value="">Без ключа</option></select></label>
+          <label><span data-i18n="sshClient">SSH-клиент</span><select name="client" id="ssh-client"><option value="openssh">OpenSSH</option><option value="putty">PuTTY</option></select></label>
+          <label><span data-i18n="userNoPassword">Пользователь без пароля</span><input name="user" maxlength="32" placeholder="ubuntu" autocomplete="off"></label>
+          <label><span data-i18n="allowedKey">Разрешённый PPK-ключ</span><select name="identity_file" id="identity-file"><option value="">Без ключа</option></select></label>
         </div>
-        <label id="image-row" hidden>Профиль песочницы<select name="image" id="image"></select></label>
-        <div class="actions"><button type="submit">Проверить план</button><button id="launch" type="button" class="danger" disabled>Запустить</button></div>
-        <div id="message" class="message">Сначала сформируйте план. Запуск всегда требует отдельного системного подтверждения.</div>
-        <pre id="plan">План ещё не сформирован.</pre>
+        <label id="image-row" hidden><span data-i18n="sandboxProfile">Профиль песочницы</span><select name="image" id="image"></select></label>
+        <div class="actions"><button type="submit" data-i18n="checkPlan">Проверить план</button><button id="launch" type="button" class="danger" disabled data-i18n="launch">Запустить</button></div>
+        <div id="message" class="message" data-i18n="planFirst">Сначала сформируйте план. Запуск всегда требует отдельного системного подтверждения.</div>
+        <pre id="plan" data-i18n="planEmpty">План ещё не сформирован.</pre>
       </form>
 
       <aside class="panel">
-        <p class="eyebrow">TRUST POLICY</p><h2>Защитные гарантии</h2>
+        <p class="eyebrow">TRUST POLICY</p><h2 data-i18n="safety">Защитные гарантии</h2>
         <ul class="checks">
-          <li>Node слушает только loopback</li>
-          <li>POST разрешён только same-origin панели</li>
-          <li>Credentials и arbitrary commands запрещены</li>
-          <li>Target обязан пройти allowlist</li>
-          <li>Каждый запуск подтверждается нативным окном</li>
-          <li>Аудит защищён HMAC-SHA-256 chain</li>
+          <li data-i18n="safety1">Node слушает только loopback</li>
+          <li data-i18n="safety2">POST разрешён только same-origin панели</li>
+          <li data-i18n="safety3">Credentials и arbitrary commands запрещены</li>
+          <li data-i18n="safety4">Target обязан пройти allowlist</li>
+          <li data-i18n="safety5">Каждый запуск подтверждается нативным окном</li>
+          <li data-i18n="safety6">Аудит защищён HMAC-SHA-256 chain</li>
         </ul>
         <hr>
-        <p class="muted">Разрешённые цели</p><div id="allowlist" class="tags"></div>
+        <p class="muted" data-i18n="allowedTargets">Разрешённые цели</p><div id="allowlist" class="tags"></div>
       </aside>
     </section>
 
     <section class="panel workflow-panel">
       <div class="title-row">
-        <div><p class="eyebrow">ALLOWLISTED AUTOMATION</p><h2>SSH Workflow</h2></div>
+        <div><p class="eyebrow">ALLOWLISTED AUTOMATION</p><h2 data-i18n="workflow">SSH Workflow</h2></div>
         <div id="plink-state" class="pill wait">ПРОВЕРКА PLINK</div>
       </div>
-      <p class="muted">Только встроенные сценарии. Произвольные команды, пароль и неподтверждённый host key API не принимает.</p>
+      <p class="muted" data-i18n="workflowDescription">Только встроенные сценарии. Произвольные команды, пароль и неподтверждённый host key API не принимает.</p>
       <form id="workflow-form" class="workflow-grid">
-        <label>Сервер<input name="target" id="workflow-target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
-        <label>SSH-пользователь<input name="user" id="workflow-user" maxlength="32" placeholder="ubuntu" autocomplete="off"></label>
-        <label>Разрешённый PPK<select name="identity_file" id="workflow-identity"><option value="">Выберите ключ</option></select></label>
-        <label>Готовый сценарий<select name="workflow" id="workflow-profile"></select></label>
-        <div class="actions workflow-actions"><button type="submit">Проверить workflow</button><button id="workflow-run" type="button" class="danger" disabled>Выполнить</button></div>
+        <label><span data-i18n="server">Сервер</span><input name="target" id="workflow-target" value="server.example" maxlength="255" autocomplete="off" spellcheck="false"></label>
+        <label><span data-i18n="sshUser">SSH-пользователь</span><input name="user" id="workflow-user" maxlength="32" placeholder="ubuntu" autocomplete="off"></label>
+        <label><span data-i18n="allowedPpk">Разрешённый PPK</span><select name="identity_file" id="workflow-identity"><option value="">Выберите ключ</option></select></label>
+        <label><span data-i18n="readyWorkflow">Готовый сценарий</span><select name="workflow" id="workflow-profile"></select></label>
+        <div class="actions workflow-actions"><button type="submit" data-i18n="checkWorkflow">Проверить workflow</button><button id="workflow-run" type="button" class="danger" disabled data-i18n="run">Выполнить</button></div>
       </form>
-      <div id="workflow-message" class="message">Сначала проверьте план и закреплённый fingerprint сервера.</div>
+      <div id="workflow-message" class="message" data-i18n="workflowFirst">Сначала проверьте план и закреплённый fingerprint сервера.</div>
       <div class="workflow-results">
-        <pre id="workflow-plan">Workflow ещё не сформирован.</pre>
-        <pre id="workflow-output">Вывод удалённой системы появится здесь.</pre>
+        <pre id="workflow-plan" data-i18n="workflowEmpty">Workflow ещё не сформирован.</pre>
+        <pre id="workflow-output" data-i18n="workflowOutput">Вывод удалённой системы появится здесь.</pre>
       </div>
     </section>
 
     <section class="panel audit-panel">
-      <div class="title-row"><div><p class="eyebrow">LOCAL AUDIT · <span id="audit-live">ПОДКЛЮЧЕНИЕ</span></p><h2>Последние операции</h2></div><div class="market-actions"><button id="audit-verify" class="ghost">Проверить целостность</button><a class="ghost" href="/api/audit/export" download>Экспорт JSONL</a><button id="audit-refresh" class="ghost">Обновить</button></div></div>
-      <div id="audit" class="audit">Записей пока нет.</div>
+      <div class="title-row"><div><p class="eyebrow">LOCAL AUDIT · <span id="audit-live">CONNECTING</span></p><h2 data-i18n="audit">Последние операции</h2></div><div class="market-actions"><button id="audit-verify" class="ghost" data-i18n="verifyIntegrity">Проверить целостность</button><a class="ghost" href="/api/audit/export" download data-i18n="exportJsonl">Экспорт JSONL</a><button id="audit-refresh" class="ghost" data-i18n="refresh">Обновить</button></div></div>
+      <div id="audit" class="audit" data-i18n="auditEmpty">Записей пока нет.</div>
     </section>
   </main>
-  <footer>FRCTL Node 0.5 Product Alpha · Windows‑маркетплейс и локальный execution boundary · не сертифицированное СЗИ</footer>
-  <script src="/app.js?v=0.5.0" defer></script>
+  <footer data-i18n="footer">FRCTL Node 0.6 Product Alpha · Windows‑маркетплейс и локальный execution boundary · не сертифицированное СЗИ</footer>
+  <script src="/i18n.js?v=0.6.0" defer></script><script src="/app.js?v=0.6.0" defer></script>
 </body>
 </html>

@@ -19,6 +19,15 @@ $env:JAVA_HOME = "C:\Program Files\Android\Android Studio1\jbr"
 
 ## История версий
 
+### Correctness phase 1 — 2026-07-18
+
+- Android API responses are decoded with `kotlinx.serialization` and tolerate unknown, reordered and nullable fields;
+- GitHub Device Flow permanently increases its polling interval after `slow_down` and handles `authorization_pending` explicitly;
+- GitHub quota exhaustion is distinguished from other HTTP 403 responses;
+- FRCTL Node returns a valid degraded/offline empty catalog when the network and disk cache are unavailable;
+- Plink receives the pinned `SHA256:…` fingerprint format documented for `-hostkey`;
+- binary audit-key creation is made reliable on Windows.
+
 ### Security phase 0 — 2026-07-18
 
 - GitHub token encrypted with a non-exportable Android Keystore AES/GCM key, with one-time plaintext migration;

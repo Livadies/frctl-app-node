@@ -77,8 +77,23 @@ class MarketplaceService:
                 if self.cache_path.is_file():
                     cached = json.loads(self.cache_path.read_text(encoding="utf-8"))
                     self.memory = (now, cached)
-                    return {**cached, "cached": True, "degraded": True}
-                raise
+                    return {**cached, "cached": True, "degraded": True, "offline": True}
+                empty = self._empty_snapshot()
+                self.memory = (now, empty)
+                return empty
+
+    def _empty_snapshot(self) -> dict[str, Any]:
+        return {
+            "schema": 1,
+            "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
+            "cached": False,
+            "degraded": True,
+            "offline": True,
+            "refresh_seconds": self.ttl_seconds,
+            "categories": list(CATEGORIES),
+            "sources": ["GitHub", "Hugging Face"],
+            "entries": [],
+        }
 
     def _fetch(self) -> dict[str, Any]:
         github = json.loads(self.fetcher(GITHUB_URL))
@@ -89,6 +104,7 @@ class MarketplaceService:
             "generated_at": datetime.now(UTC).isoformat(timespec="seconds"),
             "cached": False,
             "degraded": False,
+            "offline": False,
             "refresh_seconds": self.ttl_seconds,
             "categories": list(CATEGORIES),
             "sources": ["GitHub", "Hugging Face"],

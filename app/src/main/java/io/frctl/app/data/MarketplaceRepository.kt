@@ -21,6 +21,15 @@ internal fun mirrorCandidate(repoId: String): String {
     return "https://huggingface.co/datasets/livadies/frctl-mirror/resolve/main/$asset"
 }
 
+internal fun catalogHttpError(status: Int, github: Boolean, githubRateRemaining: String?): String? = when {
+    status == 403 && github && githubRateRemaining == "0" -> "GitHub rate limit reached. Connect GitHub or use the cached catalog."
+    status == 403 && github -> "GitHub refused access to this resource. Check the repository visibility and token permissions."
+    status == 403 -> "Catalog source refused access to this resource."
+    status == 429 -> "Catalog source rate limit reached. Use the cached catalog and retry later."
+    status !in 200..299 -> "Network route returned HTTP $status"
+    else -> null
+}
+
 class MarketplaceRepository(private val context: Context) {
     private val store = TokenStore(context)
     private val client = HttpClient(Android) { install(HttpTimeout) { requestTimeoutMillis = 20_000 } }
@@ -161,9 +170,8 @@ class MarketplaceRepository(private val context: Context) {
                 TokenMode.RAW -> token
             })
         }
-        if (response.status.value == 403 && github) error("GitHub rate limit reached. Connect GitHub or use the cached catalog.")
-        if (response.status.value == 429) error("Catalog source rate limit reached. Use the cached catalog and retry later.")
-        if (response.status.value !in 200..299) error("Network route returned HTTP ${response.status.value}")
+        val rateRemaining = if (github) response.headers["X-RateLimit-Remaining"] else null
+        catalogHttpError(response.status.value, github, rateRemaining)?.let(::error)
         return response.body()
     }
 }

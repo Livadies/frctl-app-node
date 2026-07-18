@@ -32,6 +32,16 @@ class MarketplaceTests(unittest.TestCase):
         result = service.snapshot()
         self.assertTrue(result["cached"])
         self.assertTrue(result["degraded"])
+        self.assertTrue(result["offline"])
+
+    def test_returns_schema_one_empty_catalog_when_offline_without_cache(self):
+        cache = Path(self.temp.name) / "missing" / "catalog.json"
+        service = MarketplaceService(cache, fetcher=lambda _: (_ for _ in ()).throw(OSError("offline")))
+        result = service.snapshot()
+        self.assertEqual(1, result["schema"])
+        self.assertEqual([], result["entries"])
+        self.assertTrue(result["degraded"])
+        self.assertTrue(result["offline"])
 
 
 if __name__ == "__main__":
